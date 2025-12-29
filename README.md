@@ -27,6 +27,7 @@
 
 <p align="center">
   <a href="https://github.com/grandcamel/Assistant-Skills"><img src="https://img.shields.io/github/stars/grandcamel/Assistant-Skills?style=social" alt="GitHub Stars"></a>
+  <a href="https://pypi.org/project/assistant-skills-lib/"><img src="https://img.shields.io/pypi/v/assistant-skills-lib?color=blue&logo=pypi&logoColor=white" alt="PyPI"></a>
   <img src="https://img.shields.io/badge/tests-25%2B%20passing-brightgreen?logo=pytest" alt="Tests">
   <img src="https://img.shields.io/badge/python-3.8+-3776AB?logo=python&logoColor=white" alt="Python 3.8+">
   <img src="https://img.shields.io/badge/marketplace-Claude%20Code-6366F1" alt="Claude Code Marketplace">
@@ -243,29 +244,34 @@ Comprehensive templates derived from production implementations:
 
 ## Shared Library
 
-Production-ready Python modules in `skills/shared/scripts/lib/`:
+Production-ready Python utilities available via PyPI:
+
+```bash
+pip install assistant-skills-lib
+```
 
 | Module | Purpose |
 |--------|---------|
-| `formatters.py` | Output formatting (tables, trees, colors, timestamps) |
-| `validators.py` | Input validation (emails, URLs, dates, pagination) |
-| `template_engine.py` | Template loading and placeholder replacement |
-| `project_detector.py` | Find existing Assistant Skills projects |
-| `cache.py` | Response caching with TTL and LRU eviction |
-| `error_handler.py` | Exception hierarchy and `@handle_errors` decorator |
+| `formatters` | Output formatting (tables, trees, colors, timestamps) |
+| `validators` | Input validation (emails, URLs, dates, pagination) |
+| `template_engine` | Template loading and placeholder replacement |
+| `project_detector` | Find existing Assistant Skills projects |
+| `cache` | Response caching with TTL and LRU eviction |
+| `error_handler` | Exception hierarchy and `@handle_errors` decorator |
 
 ```python
-# Example usage
-from formatters import format_table, format_tree
-from validators import validate_email, validate_url
-from cache import cached
-from error_handler import handle_errors
+from assistant_skills_lib import (
+    format_table, format_tree,
+    validate_email, validate_url,
+    Cache, handle_errors
+)
 
 @handle_errors
-@cached(ttl=300)
 def fetch_data(resource_id):
     return api.get(f"/resources/{resource_id}")
 ```
+
+📦 [assistant-skills-lib on PyPI](https://pypi.org/project/assistant-skills-lib/)
 
 ---
 
@@ -316,7 +322,8 @@ Templates derived from production implementations:
 ### Run Tests
 
 ```bash
-PYTHONPATH="skills/shared/scripts/lib" pytest skills/assistant-builder/tests/ -v
+pip install -r requirements.txt
+pytest skills/assistant-builder/tests/ -v
 ```
 
 ### Project Structure
@@ -329,16 +336,12 @@ Assistant-Skills/
 ├── skills/
 │   ├── assistant-builder/    # Project scaffolding
 │   ├── skills-optimizer/     # Token optimization
-│   ├── landing-page/         # README branding
-│   └── shared/scripts/lib/   # Shared library
-│       ├── formatters.py
-│       ├── validators.py
-│       ├── cache.py
-│       └── error_handler.py
+│   └── landing-page/         # README branding
+├── docker/                   # Docker test infrastructure
 ├── 00-project-lifecycle/     # Templates
 ├── 01-project-scaffolding/
-├── 02-shared-library/
 ├── ...
+├── requirements.txt          # Python dependencies
 └── README.md
 ```
 
@@ -353,8 +356,9 @@ Contributions welcome!
 git clone https://github.com/grandcamel/Assistant-Skills.git
 cd Assistant-Skills
 
-# Run tests
-PYTHONPATH="skills/shared/scripts/lib" pytest skills/*/tests/ -v
+# Install dependencies and run tests
+pip install -r requirements.txt
+pytest skills/*/tests/ -v
 ```
 
 ---
