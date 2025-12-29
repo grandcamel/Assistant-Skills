@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 140">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e"/>
+      <stop offset="100%" style="stop-color:#16213e"/>
+    </linearGradient>
+    <linearGradient id="textGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#6366F1"/>
+      <stop offset="100%" style="stop-color:#8B5CF6"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="140" height="140" rx="20" fill="url(#bgGradient)"/>
+
+  <!-- Terminal prompt -->
+  <text x="20" y="82" font-family="Monaco, 'Courier New', monospace" font-size="32" font-weight="bold" fill="url(#textGradient)">&gt;</text>
+
+  <!-- Product name -->
+  <text x="45" y="82" font-family="Monaco, 'Courier New', monospace" font-size="24" font-weight="bold" fill="#E0E0E0">skills</text>
+
+  <!-- Blinking cursor -->
+  <rect x="118" y="62" width="3" height="24" fill="#00C7E6">
+    <animate attributeName="opacity" values="1;0;1" dur="1s" repeatCount="indefinite"/>
+  </rect>
+</svg>
