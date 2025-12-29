@@ -15,8 +15,8 @@
 <sub>Production-ready<br>skills included</sub>
 </td>
 <td align="center">
-<h2>15+</h2>
-<sub>Battle-tested<br>templates</sub>
+<h2>20+</h2>
+<sub>Scripts &<br>templates</sub>
 </td>
 <td align="center">
 <h2>0</h2>
@@ -26,9 +26,10 @@
 </table>
 
 <p align="center">
+  <a href="https://github.com/grandcamel/Assistant-Skills"><img src="https://img.shields.io/github/stars/grandcamel/Assistant-Skills?style=social" alt="GitHub Stars"></a>
   <img src="https://img.shields.io/badge/tests-25%2B%20passing-brightgreen?logo=pytest" alt="Tests">
   <img src="https://img.shields.io/badge/python-3.8+-3776AB?logo=python&logoColor=white" alt="Python 3.8+">
-  <img src="https://img.shields.io/badge/skills-3-6366F1" alt="Skills">
+  <img src="https://img.shields.io/badge/marketplace-Claude%20Code-6366F1" alt="Claude Code Marketplace">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License">
 </p>
 
@@ -103,23 +104,19 @@ with search and issues skills"
 
 ## Quick Start
 
-### 1. Install from Marketplace
+### 1. Install Plugin
 
-From Claude Code, add the marketplace:
+From Claude Code:
 ```
 /plugin grandcamel/Assistant-Skills
 ```
 
-Then install the plugin:
-```
-/plugin grandcamel/Assistant-Skills assistant-skills
-```
+This adds the marketplace and installs the `assistant-skills` plugin with all 3 skills.
 
-**Alternative: Local installation**
+**Alternative: Clone locally**
 ```bash
 git clone https://github.com/grandcamel/Assistant-Skills.git
-# Then in Claude Code:
-/plugin /path/to/Assistant-Skills
+cd Assistant-Skills && /plugin .
 ```
 
 ### 2. Create Your First Project
@@ -244,6 +241,34 @@ Comprehensive templates derived from production implementations:
 
 ---
 
+## Shared Library
+
+Production-ready Python modules in `skills/shared/scripts/lib/`:
+
+| Module | Purpose |
+|--------|---------|
+| `formatters.py` | Output formatting (tables, trees, colors, timestamps) |
+| `validators.py` | Input validation (emails, URLs, dates, pagination) |
+| `template_engine.py` | Template loading and placeholder replacement |
+| `project_detector.py` | Find existing Assistant Skills projects |
+| `cache.py` | Response caching with TTL and LRU eviction |
+| `error_handler.py` | Exception hierarchy and `@handle_errors` decorator |
+
+```python
+# Example usage
+from formatters import format_table, format_tree
+from validators import validate_email, validate_url
+from cache import cached
+from error_handler import handle_errors
+
+@handle_errors
+@cached(ttl=300)
+def fetch_data(resource_id):
+    return api.get(f"/resources/{resource_id}")
+```
+
+---
+
 ## Architecture
 
 ```mermaid
@@ -299,14 +324,20 @@ PYTHONPATH="skills/shared/scripts/lib" pytest skills/assistant-builder/tests/ -v
 ```
 Assistant-Skills/
 ├── .claude-plugin/
-│   └── plugin.json          # Plugin manifest
+│   ├── plugin.json           # Plugin manifest
+│   └── marketplace.json      # Marketplace registry
 ├── skills/
-│   ├── assistant-builder/   # Project scaffolding
-│   ├── skills-optimizer/    # Token optimization
-│   ├── landing-page/        # README branding
-│   └── shared/              # Shared library
-├── 00-project-lifecycle/    # Templates
+│   ├── assistant-builder/    # Project scaffolding
+│   ├── skills-optimizer/     # Token optimization
+│   ├── landing-page/         # README branding
+│   └── shared/scripts/lib/   # Shared library
+│       ├── formatters.py
+│       ├── validators.py
+│       ├── cache.py
+│       └── error_handler.py
+├── 00-project-lifecycle/     # Templates
 ├── 01-project-scaffolding/
+├── 02-shared-library/
 ├── ...
 └── README.md
 ```
