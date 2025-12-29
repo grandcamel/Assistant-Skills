@@ -26,6 +26,7 @@ wheels/
 htmlcov/
 .tox/
 .nox/
+test-results/
 
 # IDE
 .idea/
@@ -47,3 +48,6 @@ Thumbs.db
 env/
 venv/
 ENV/
+
+# Nested repos
+assistant-skills-lib/
