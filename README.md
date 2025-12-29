@@ -103,16 +103,25 @@ with search and issues skills"
 
 ## Quick Start
 
-### 1. Install as Plugin
+### 1. Install from Marketplace
 
+From Claude Code, add the marketplace and install:
+```
+/plugin https://github.com/grandcamel/Assistant-Skills
+```
+
+Or install individual skills:
+```
+/plugin https://github.com/grandcamel/Assistant-Skills assistant-builder
+/plugin https://github.com/grandcamel/Assistant-Skills skills-optimizer
+/plugin https://github.com/grandcamel/Assistant-Skills landing-page
+```
+
+**Alternative: Local installation**
 ```bash
-# Clone and install
 git clone https://github.com/grandcamel/Assistant-Skills.git
-```
-
-From Claude Code:
-```
-/install-plugin /path/to/Assistant-Skills
+# Then in Claude Code:
+/plugin /path/to/Assistant-Skills
 ```
 
 ### 2. Create Your First Project
