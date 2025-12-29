@@ -1,0 +1,235 @@
+# SKILL.md Template
+
+## Purpose
+
+Template for skill SKILL.md files with 3-level progressive disclosure.
+
+## Placeholders
+
+- `{{TOPIC}}` - Lowercase prefix
+- `{{SKILL_NAME}}` - Skill name without prefix
+- `{{SKILL_DESCRIPTION}}` - One-line description
+- `{{WHEN_TO_USE}}` - List of trigger scenarios
+- `{{SCRIPTS_TABLE}}` - Markdown table of scripts
+- `{{EXAMPLES}}` - Example commands
+
+---
+
+```markdown
+---
+name: "{{TOPIC}}-{{SKILL_NAME}}"
+description: "{{SKILL_DESCRIPTION}}"
+when_to_use: |
+  {{WHEN_TO_USE}}
+---
+
+# {{SKILL_NAME}} Skill
+
+{{SKILL_DESCRIPTION}}
+
+---
+
+## What This Skill Does
+
+| Operation | Script | Description |
+|-----------|--------|-------------|
+{{SCRIPTS_TABLE}}
+
+---
+
+## Quick Start
+
+### List Resources
+
+```bash
+python list_{{resource}}.py
+python list_{{resource}}.py --output json
+python list_{{resource}}.py --profile development
+```
+
+### Get a Resource
+
+```bash
+python get_{{resource}}.py ID
+python get_{{resource}}.py ID --output json
+```
+
+### Create a Resource
+
+```bash
+python create_{{resource}}.py --name "Name" --description "Description"
+```
+
+### Update a Resource
+
+```bash
+python update_{{resource}}.py ID --name "New Name"
+```
+
+### Delete a Resource
+
+```bash
+python delete_{{resource}}.py ID
+python delete_{{resource}}.py ID --dry-run  # Preview only
+```
+
+---
+
+## Available Scripts
+
+All scripts support:
+- `--help` - Show usage and examples
+- `--profile` - Use specific configuration profile
+- `--output` - Output format (text, json)
+
+### list_{{resource}}.py
+
+List all resources with optional filtering.
+
+```bash
+python list_{{resource}}.py [OPTIONS]
+
+Options:
+  --filter FILTER     Filter expression
+  --limit N           Maximum results (default: 50)
+  --output FORMAT     Output format: text, json
+  --profile PROFILE   Configuration profile
+```
+
+### get_{{resource}}.py
+
+Get details of a specific resource.
+
+```bash
+python get_{{resource}}.py ID [OPTIONS]
+
+Arguments:
+  ID                  Resource ID or key
+
+Options:
+  --output FORMAT     Output format: text, json
+  --profile PROFILE   Configuration profile
+```
+
+### create_{{resource}}.py
+
+Create a new resource.
+
+```bash
+python create_{{resource}}.py [OPTIONS]
+
+Options:
+  --name NAME         Resource name (required)
+  --description DESC  Resource description
+  --output FORMAT     Output format: text, json
+  --profile PROFILE   Configuration profile
+```
+
+### update_{{resource}}.py
+
+Update an existing resource.
+
+```bash
+python update_{{resource}}.py ID [OPTIONS]
+
+Arguments:
+  ID                  Resource ID or key
+
+Options:
+  --name NAME         New name
+  --description DESC  New description
+  --output FORMAT     Output format: text, json
+  --profile PROFILE   Configuration profile
+```
+
+### delete_{{resource}}.py
+
+Delete a resource.
+
+```bash
+python delete_{{resource}}.py ID [OPTIONS]
+
+Arguments:
+  ID                  Resource ID or key
+
+Options:
+  --dry-run           Preview deletion without executing
+  --force             Skip confirmation prompt
+  --profile PROFILE   Configuration profile
+```
+
+---
+
+## Examples
+
+{{EXAMPLES}}
+
+---
+
+## Common Patterns
+
+### Batch Operations
+
+```bash
+# List and process
+for id in $(python list_{{resource}}.py --output json | jq -r '.[].id'); do
+    python update_{{resource}}.py $id --status "archived"
+done
+```
+
+### Using with Profiles
+
+```bash
+# Development environment
+python list_{{resource}}.py --profile development
+
+# Production environment
+python list_{{resource}}.py --profile production
+```
+
+### JSON Output for Scripting
+
+```bash
+# Get as JSON and filter with jq
+python get_{{resource}}.py ID --output json | jq '.name'
+
+# List and filter
+python list_{{resource}}.py --output json | jq '.[] | select(.status == "active")'
+```
+
+---
+
+## Error Handling
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| 401 Unauthorized | Invalid or expired token | Check API token configuration |
+| 403 Forbidden | Insufficient permissions | Verify account has required access |
+| 404 Not Found | Resource doesn't exist | Check ID/key is correct |
+| 429 Rate Limited | Too many requests | Wait and retry |
+
+---
+
+## Related Skills
+
+| Skill | Relationship |
+|-------|--------------|
+| `{{TOPIC}}-other` | Related operations |
+
+---
+
+## Configuration
+
+This skill uses the shared configuration system:
+
+```bash
+# Environment variables
+export {{API_NAME}}_URL="https://api.example.com"
+export {{API_NAME}}_API_TOKEN="your-token"
+
+# Or settings file
+# .claude/settings.local.json
+```
+
+See [Configuration Guide](docs/configuration.md) for details.
+```

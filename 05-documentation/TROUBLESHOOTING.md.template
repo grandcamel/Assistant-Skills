@@ -1,0 +1,501 @@
+# TROUBLESHOOTING.md Template
+
+## Purpose
+
+Document common errors and their solutions.
+
+## Placeholders
+
+- `{{API_NAME}}` - API name
+- `{{TOPIC}}` - Lowercase prefix
+
+---
+
+# Troubleshooting Guide
+
+Solutions for common issues with {{API_NAME}} Assistant Skills.
+
+---
+
+## Quick Diagnostics
+
+Run these commands to diagnose issues:
+
+```bash
+# 1. Check environment
+echo "URL: ${{API_NAME}}_URL"
+echo "Token set: $([ -n "${{API_NAME}}_API_TOKEN" ] && echo 'yes' || echo 'no')"
+
+# 2. Test connectivity
+python -c "
+import requests
+url = '${{API_NAME}}_URL'
+resp = requests.get(f'{url}/api/health', timeout=5)
+print(f'Status: {resp.status_code}')
+"
+
+# 3. Test authentication
+python list_resources.py --limit 1
+
+# 4. Check Python environment
+python --version
+pip list | grep -E "requests|tabulate|pytest"
+```
+
+---
+
+## Authentication Errors
+
+### Error: 401 Unauthorized
+
+**Symptoms:**
+```
+✗ Error: Authentication failed
+```
+
+**Causes:**
+1. API token is invalid
+2. API token has expired
+3. Token not set in environment
+
+**Solutions:**
+
+1. **Verify token is set:**
+   ```bash
+   echo ${{API_NAME}}_API_TOKEN | head -c 10
+   # Should show first 10 characters
+   ```
+
+2. **Regenerate token:**
+   - Go to {{API_NAME}} account settings
+   - Navigate to API tokens
+   - Create new token
+   - Update environment variable
+
+3. **Check token format:**
+   ```bash
+   # Token should not have quotes or whitespace
+   export {{API_NAME}}_API_TOKEN="your-token-here"
+   ```
+
+4. **Verify token in settings file:**
+   ```bash
+   # Check settings.local.json
+   cat .claude/settings.local.json | jq '.{{TOPIC}}.api_token'
+   ```
+
+### Error: Token Expired
+
+**Symptoms:**
+```
+✗ Error: Token has expired
+```
+
+**Solution:**
+1. Generate new token from {{API_NAME}} settings
+2. Update in environment or settings.local.json
+3. Tokens typically expire after 90-365 days
+
+---
+
+## Permission Errors
+
+### Error: 403 Forbidden
+
+**Symptoms:**
+```
+✗ Error: Permission denied
+```
+
+**Causes:**
+1. Account lacks required permissions
+2. Resource requires special access
+3. Rate limiting (sometimes returns 403)
+
+**Solutions:**
+
+1. **Check account permissions:**
+   ```bash
+   # List what you can access
+   python list_resources.py --limit 1
+   ```
+
+2. **Verify resource access:**
+   - Some resources are project-specific
+   - Check if resource exists in accessible scope
+
+3. **Contact administrator:**
+   - Request appropriate permissions
+   - Document which operation failed
+
+### Error: Insufficient Privileges for Operation
+
+**Symptoms:**
+```
+✗ Error: You don't have permission to perform this action
+```
+
+**Solutions:**
+1. Check if operation requires admin access
+2. Verify project/space permissions
+3. Some operations (delete, configure) need elevated access
+
+---
+
+## Connection Errors
+
+### Error: Connection Refused
+
+**Symptoms:**
+```
+✗ Error: Connection error: [Errno 111] Connection refused
+```
+
+**Causes:**
+1. Wrong URL
+2. Network/firewall blocking
+3. Service is down
+
+**Solutions:**
+
+1. **Verify URL:**
+   ```bash
+   echo ${{API_NAME}}_URL
+   # Should be: https://api.example.com (no trailing slash)
+   ```
+
+2. **Test direct connectivity:**
+   ```bash
+   curl -I ${{API_NAME}}_URL
+   ```
+
+3. **Check network:**
+   ```bash
+   # DNS resolution
+   nslookup $(echo ${{API_NAME}}_URL | sed 's|https://||' | cut -d/ -f1)
+
+   # Port connectivity
+   nc -zv $(echo ${{API_NAME}}_URL | sed 's|https://||' | cut -d/ -f1) 443
+   ```
+
+### Error: Timeout
+
+**Symptoms:**
+```
+✗ Error: Request timed out after 30s
+```
+
+**Causes:**
+1. Slow network
+2. API under load
+3. Large response
+
+**Solutions:**
+
+1. **Increase timeout:**
+   ```json
+   // In settings.json
+   {
+     "{{TOPIC}}": {
+       "api": {
+         "timeout": 60
+       }
+     }
+   }
+   ```
+
+2. **Reduce request size:**
+   ```bash
+   python list_resources.py --limit 10  # Smaller page size
+   ```
+
+3. **Check API status:**
+   - Visit {{API_NAME}} status page
+   - Try again later if service issues
+
+### Error: SSL Certificate
+
+**Symptoms:**
+```
+✗ Error: SSL: CERTIFICATE_VERIFY_FAILED
+```
+
+**Solutions:**
+
+1. **Update certificates:**
+   ```bash
+   # macOS
+   /Applications/Python\ 3.x/Install\ Certificates.command
+
+   # Linux
+   sudo update-ca-certificates
+
+   # pip
+   pip install --upgrade certifi
+   ```
+
+2. **Verify URL uses HTTPS:**
+   ```bash
+   echo ${{API_NAME}}_URL | grep -q "^https://" && echo "OK" || echo "Must use HTTPS"
+   ```
+
+---
+
+## Rate Limiting
+
+### Error: 429 Too Many Requests
+
+**Symptoms:**
+```
+✗ Error: Rate limit exceeded
+
+Try again in 60 seconds.
+```
+
+**Causes:**
+1. Too many requests in time window
+2. Bulk operations without delays
+3. Parallel script execution
+
+**Solutions:**
+
+1. **Wait and retry:**
+   - Check Retry-After header value
+   - Wait specified seconds
+
+2. **Add delays for bulk operations:**
+   ```bash
+   # Add --delay flag if available
+   python bulk_update.py --ids "..." --delay 1
+   ```
+
+3. **Reduce parallel requests:**
+   - Run one script at a time
+   - Use smaller batch sizes
+
+4. **Check rate limits:**
+   - Review {{API_NAME}} documentation
+   - Contact support for limit increases
+
+---
+
+## Not Found Errors
+
+### Error: 404 Not Found
+
+**Symptoms:**
+```
+✗ Error: Resource not found
+```
+
+**Causes:**
+1. Wrong ID or key
+2. Resource was deleted
+3. Typo in identifier
+4. Resource in different scope
+
+**Solutions:**
+
+1. **Verify identifier:**
+   ```bash
+   # List resources to find correct ID
+   python list_resources.py --output json | jq '.[].id'
+   ```
+
+2. **Check for typos:**
+   ```bash
+   # IDs are case-sensitive
+   python get_resource.py "Res-123"  # Wrong
+   python get_resource.py "res-123"  # Correct
+   ```
+
+3. **Search for resource:**
+   ```bash
+   python search.py "name ~ 'partial-name'"
+   ```
+
+---
+
+## Validation Errors
+
+### Error: 400 Bad Request
+
+**Symptoms:**
+```
+✗ Error: Invalid request: field 'name' is required
+```
+
+**Causes:**
+1. Missing required fields
+2. Invalid field format
+3. Value out of range
+
+**Solutions:**
+
+1. **Check required fields:**
+   ```bash
+   python create_resource.py --help
+   # Review required vs optional arguments
+   ```
+
+2. **Validate input format:**
+   ```bash
+   # IDs: alphanumeric with hyphens
+   # Dates: YYYY-MM-DD
+   # URLs: must be HTTPS
+   ```
+
+3. **Check value constraints:**
+   - Length limits
+   - Allowed values
+   - Character restrictions
+
+---
+
+## Configuration Issues
+
+### Error: Configuration Not Found
+
+**Symptoms:**
+```
+✗ Error: API URL not configured
+```
+
+**Solutions:**
+
+1. **Set environment variables:**
+   ```bash
+   export {{API_NAME}}_URL="https://api.example.com"
+   export {{API_NAME}}_API_TOKEN="your-token"
+   ```
+
+2. **Create settings file:**
+   ```bash
+   # Create .claude/settings.local.json
+   cat > .claude/settings.local.json << 'EOF'
+   {
+     "{{TOPIC}}": {
+       "url": "https://api.example.com",
+       "api_token": "your-token"
+     }
+   }
+   EOF
+   ```
+
+3. **Verify file location:**
+   ```bash
+   # Must be in project with .claude directory
+   ls -la .claude/
+   ```
+
+### Error: Profile Not Found
+
+**Symptoms:**
+```
+✗ Error: Profile 'production' not found
+```
+
+**Solutions:**
+
+1. **List available profiles:**
+   ```bash
+   cat .claude/settings.json | jq '.{{TOPIC}}.profiles | keys'
+   ```
+
+2. **Add missing profile:**
+   ```json
+   {
+     "{{TOPIC}}": {
+       "profiles": {
+         "production": {
+           "url": "https://api.example.com"
+         }
+       }
+     }
+   }
+   ```
+
+---
+
+## Python Environment Issues
+
+### Error: ModuleNotFoundError
+
+**Symptoms:**
+```
+ModuleNotFoundError: No module named 'requests'
+```
+
+**Solutions:**
+
+1. **Install dependencies:**
+   ```bash
+   pip install -r .claude/skills/shared/scripts/lib/requirements.txt
+   ```
+
+2. **Check Python environment:**
+   ```bash
+   which python
+   pip list | grep requests
+   ```
+
+3. **Activate virtual environment:**
+   ```bash
+   source venv/bin/activate  # or .venv/bin/activate
+   ```
+
+### Error: Python Version
+
+**Symptoms:**
+```
+SyntaxError: invalid syntax
+# (usually from f-strings or type hints)
+```
+
+**Solutions:**
+
+1. **Check Python version:**
+   ```bash
+   python --version
+   # Requires Python 3.8+
+   ```
+
+2. **Use correct Python:**
+   ```bash
+   python3 script.py  # Instead of python
+   ```
+
+---
+
+## Getting Help
+
+### Before Contacting Support
+
+1. **Gather information:**
+   ```bash
+   # System info
+   python --version
+   pip list
+
+   # Reproduce error
+   python script.py --help
+   python script.py [args] 2>&1 | tee error.log
+   ```
+
+2. **Check documentation:**
+   - SKILL.md files
+   - --help for each script
+   - CLAUDE.md for project info
+
+3. **Search issues:**
+   - GitHub Issues
+   - Stack Overflow
+
+### Reporting Issues
+
+Include:
+1. Command that failed
+2. Full error message
+3. Python version
+4. OS and version
+5. Steps to reproduce

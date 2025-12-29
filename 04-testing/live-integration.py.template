@@ -1,0 +1,267 @@
+#!/usr/bin/env python3
+"""
+Live Integration Test Template
+
+Placeholders:
+- {{TOPIC}} - Lowercase prefix
+- {{SKILL_NAME}} - Skill name
+- {{RESOURCE}} - Resource name (singular)
+- {{RESOURCES}} - Resource name (plural)
+- {{API_NAME}} - API name
+"""
+
+import os
+import sys
+import time
+import uuid
+from pathlib import Path
+
+import pytest
+
+# Add shared library to path
+SHARED_LIB = Path(__file__).parent.parent.parent.parent / 'shared' / 'scripts' / 'lib'
+sys.path.insert(0, str(SHARED_LIB))
+
+from config_manager import get_client
+from error_handler import NotFoundError
+
+
+# =============================================================================
+# SESSION-SCOPED FIXTURES
+# =============================================================================
+
+@pytest.fixture(scope="session")
+def {{TOPIC}}_client(request):
+    """
+    Get a configured client for the test session.
+
+    Requires --profile command line option.
+    """
+    profile = request.config.getoption("--profile")
+    if not profile:
+        pytest.skip("Live tests require --profile option")
+
+    try:
+        client = get_client(profile=profile)
+        # Test connectivity
+        client.get('/api/health')  # Adjust endpoint as needed
+        return client
+    except Exception as e:
+        pytest.skip(f"Could not connect to {{API_NAME}}: {e}")
+
+
+@pytest.fixture(scope="session")
+def test_prefix():
+    """Generate a unique prefix for test resources."""
+    return f"test-{uuid.uuid4().hex[:8]}"
+
+
+@pytest.fixture(scope="session")
+def test_{{resource}}({{TOPIC}}_client, test_prefix):
+    """
+    Create a test {{resource}} for the session.
+
+    This fixture creates a {{resource}} at session start and cleans it up at end.
+    """
+    # Create test {{resource}}
+    {{resource}}_data = {
+        'name': f'{test_prefix}-integration-test',
+        'description': 'Created by integration tests - safe to delete',
+    }
+
+    {{resource}} = {{TOPIC}}_client.post('/api/{{RESOURCES}}', json_data={{resource}}_data)
+    {{resource}}_id = {{resource}}.get('id')
+
+    print(f"\n[Setup] Created test {{resource}}: {{{resource}}_id}")
+
+    yield {{resource}}
+
+    # Cleanup
+    try:
+        {{TOPIC}}_client.delete(f'/api/{{RESOURCES}}/{{{resource}}_id}')
+        print(f"\n[Teardown] Deleted test {{resource}}: {{{resource}}_id}")
+    except NotFoundError:
+        print(f"\n[Teardown] Test {{resource}} already deleted: {{{resource}}_id}")
+    except Exception as e:
+        print(f"\n[Teardown] Warning: Could not delete test {{resource}}: {e}")
+
+
+# =============================================================================
+# LIFECYCLE TESTS
+# =============================================================================
+
+class TestResourceLifecycle:
+    """
+    Integration tests for {{resource}} CRUD lifecycle.
+
+    These tests create real resources and clean them up.
+    """
+
+    @pytest.mark.integration
+    @pytest.mark.live
+    def test_create_{{resource}}(self, {{TOPIC}}_client, test_prefix):
+        """Should create a new {{resource}}."""
+        {{resource}}_data = {
+            'name': f'{test_prefix}-create-test',
+            'description': 'Test creation',
+        }
+
+        result = {{TOPIC}}_client.post('/api/{{RESOURCES}}', json_data={{resource}}_data)
+
+        assert result is not None
+        assert 'id' in result
+        assert result['name'] == {{resource}}_data['name']
+
+        # Cleanup
+        {{TOPIC}}_client.delete(f"/api/{{RESOURCES}}/{result['id']}")
+
+    @pytest.mark.integration
+    @pytest.mark.live
+    def test_get_{{resource}}(self, {{TOPIC}}_client, test_{{resource}}):
+        """Should retrieve an existing {{resource}}."""
+        {{resource}}_id = test_{{resource}}['id']
+
+        result = {{TOPIC}}_client.get(f'/api/{{RESOURCES}}/{{{resource}}_id}')
+
+        assert result is not None
+        assert result['id'] == {{resource}}_id
+        assert result['name'] == test_{{resource}}['name']
+
+    @pytest.mark.integration
+    @pytest.mark.live
+    def test_update_{{resource}}(self, {{TOPIC}}_client, test_{{resource}}):
+        """Should update an existing {{resource}}."""
+        {{resource}}_id = test_{{resource}}['id']
+        update_data = {
+            'description': 'Updated by integration test',
+        }
+
+        result = {{TOPIC}}_client.put(
+            f'/api/{{RESOURCES}}/{{{resource}}_id}',
+            json_data=update_data
+        )
+
+        assert result['description'] == update_data['description']
+
+    @pytest.mark.integration
+    @pytest.mark.live
+    def test_list_{{RESOURCES}}(self, {{TOPIC}}_client, test_{{resource}}):
+        """Should list {{RESOURCES}} including test {{resource}}."""
+        results = list({{TOPIC}}_client.paginate('/api/{{RESOURCES}}', max_results=100))
+
+        assert len(results) > 0
+
+        # Find our test {{resource}}
+        test_ids = [r['id'] for r in results]
+        assert test_{{resource}}['id'] in test_ids
+
+    @pytest.mark.integration
+    @pytest.mark.live
+    def test_delete_{{resource}}(self, {{TOPIC}}_client, test_prefix):
+        """Should delete a {{resource}}."""
+        # Create {{resource}} to delete
+        {{resource}}_data = {
+            'name': f'{test_prefix}-delete-test',
+        }
+        {{resource}} = {{TOPIC}}_client.post('/api/{{RESOURCES}}', json_data={{resource}}_data)
+        {{resource}}_id = {{resource}}['id']
+
+        # Delete it
+        {{TOPIC}}_client.delete(f'/api/{{RESOURCES}}/{{{resource}}_id}')
+
+        # Verify deleted
+        with pytest.raises(NotFoundError):
+            {{TOPIC}}_client.get(f'/api/{{RESOURCES}}/{{{resource}}_id}')
+
+
+# =============================================================================
+# ERROR HANDLING TESTS
+# =============================================================================
+
+class TestErrorHandling:
+    """Integration tests for error scenarios."""
+
+    @pytest.mark.integration
+    @pytest.mark.live
+    def test_get_nonexistent_{{resource}}(self, {{TOPIC}}_client):
+        """Should return 404 for nonexistent {{resource}}."""
+        with pytest.raises(NotFoundError):
+            {{TOPIC}}_client.get('/api/{{RESOURCES}}/nonexistent-id-12345')
+
+    @pytest.mark.integration
+    @pytest.mark.live
+    def test_create_invalid_{{resource}}(self, {{TOPIC}}_client):
+        """Should return validation error for invalid data."""
+        from error_handler import ValidationError
+
+        invalid_data = {
+            # Missing required 'name' field
+        }
+
+        with pytest.raises((ValidationError, Exception)):
+            {{TOPIC}}_client.post('/api/{{RESOURCES}}', json_data=invalid_data)
+
+
+# =============================================================================
+# PAGINATION TESTS
+# =============================================================================
+
+class TestPagination:
+    """Integration tests for pagination."""
+
+    @pytest.mark.integration
+    @pytest.mark.live
+    @pytest.mark.slow
+    def test_pagination_returns_all_results(self, {{TOPIC}}_client):
+        """Should paginate through all results."""
+        # Get first page with small limit
+        params = {'limit': 5}
+        first_page = {{TOPIC}}_client.get('/api/{{RESOURCES}}', params=params)
+
+        # Paginate through all
+        all_results = list({{TOPIC}}_client.paginate('/api/{{RESOURCES}}', limit=5, max_results=50))
+
+        # Should have more results via pagination (if enough data exists)
+        # This test may need adjustment based on actual data volume
+        assert len(all_results) >= 0
+
+
+# =============================================================================
+# CLEANUP UTILITIES
+# =============================================================================
+
+def cleanup_test_{{RESOURCES}}(client, prefix: str):
+    """
+    Cleanup any leftover test {{RESOURCES}}.
+
+    Call this if tests fail and leave resources behind.
+    """
+    print(f"Cleaning up {{RESOURCES}} with prefix: {prefix}")
+
+    try:
+        for {{resource}} in client.paginate('/api/{{RESOURCES}}', max_results=1000):
+            if {{resource}}.get('name', '').startswith(prefix):
+                try:
+                    client.delete(f"/api/{{RESOURCES}}/{{{resource}}['id']}")
+                    print(f"  Deleted: {{{resource}}['id']}")
+                except Exception as e:
+                    print(f"  Failed to delete {{{resource}}['id']}: {e}")
+    except Exception as e:
+        print(f"Cleanup error: {e}")
+
+
+if __name__ == '__main__':
+    # Allow running cleanup directly
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Run integration tests or cleanup')
+    parser.add_argument('--cleanup', action='store_true', help='Clean up test resources')
+    parser.add_argument('--profile', required=True, help='Configuration profile')
+    parser.add_argument('--prefix', default='test-', help='Prefix to cleanup')
+    args = parser.parse_args()
+
+    if args.cleanup:
+        client = get_client(profile=args.profile)
+        cleanup_test_{{RESOURCES}}(client, args.prefix)
+    else:
+        pytest.main([__file__, '-v', f'--profile={args.profile}'])

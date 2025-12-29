@@ -1,0 +1,349 @@
+#!/usr/bin/env python3
+"""
+Output Formatters Template
+
+No placeholders required - this is API-agnostic.
+"""
+
+import json
+import sys
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Union
+
+try:
+    from tabulate import tabulate
+    HAS_TABULATE = True
+except ImportError:
+    HAS_TABULATE = False
+
+
+# =============================================================================
+# SUCCESS/ERROR OUTPUT
+# =============================================================================
+
+def print_success(message: str) -> None:
+    """
+    Print a success message with a checkmark.
+
+    Args:
+        message: Success message to display
+    """
+    print(f"✓ {message}")
+
+
+def print_error(message: str, exception: Optional[Exception] = None) -> None:
+    """
+    Print an error message with an X.
+
+    Args:
+        message: Error message to display
+        exception: Optional exception for additional details
+    """
+    print(f"✗ Error: {message}", file=sys.stderr)
+    if exception and str(exception) != message:
+        print(f"  Details: {exception}", file=sys.stderr)
+
+
+def print_warning(message: str) -> None:
+    """
+    Print a warning message.
+
+    Args:
+        message: Warning message to display
+    """
+    print(f"⚠ Warning: {message}", file=sys.stderr)
+
+
+def print_info(message: str) -> None:
+    """
+    Print an informational message.
+
+    Args:
+        message: Info message to display
+    """
+    print(f"ℹ {message}")
+
+
+# =============================================================================
+# TABLE FORMATTING
+# =============================================================================
+
+def format_table(
+    data: List[Dict[str, Any]],
+    headers: Optional[List[str]] = None,
+    keys: Optional[List[str]] = None,
+    tablefmt: str = "simple",
+) -> str:
+    """
+    Format data as a table.
+
+    Args:
+        data: List of dictionaries to format
+        headers: Column headers (uses keys if not provided)
+        keys: Dictionary keys to include (all if not provided)
+        tablefmt: Table format (simple, grid, github, etc.)
+
+    Returns:
+        Formatted table string
+    """
+    if not data:
+        return "No data to display"
+
+    # Determine keys to use
+    if keys is None:
+        keys = list(data[0].keys())
+
+    # Use keys as headers if not provided
+    if headers is None:
+        headers = [k.replace("_", " ").title() for k in keys]
+
+    # Extract values
+    rows = []
+    for item in data:
+        row = [item.get(k, "") for k in keys]
+        rows.append(row)
+
+    # Format table
+    if HAS_TABULATE:
+        return tabulate(rows, headers=headers, tablefmt=tablefmt)
+    else:
+        # Fallback: simple format
+        lines = ["\t".join(headers)]
+        lines.append("-" * 40)
+        for row in rows:
+            lines.append("\t".join(str(v) for v in row))
+        return "\n".join(lines)
+
+
+def format_key_value(
+    data: Dict[str, Any],
+    indent: int = 0,
+    skip_empty: bool = True,
+) -> str:
+    """
+    Format a dictionary as key-value pairs.
+
+    Args:
+        data: Dictionary to format
+        indent: Indentation level
+        skip_empty: Skip keys with empty/None values
+
+    Returns:
+        Formatted key-value string
+    """
+    lines = []
+    prefix = "  " * indent
+
+    for key, value in data.items():
+        if skip_empty and (value is None or value == ""):
+            continue
+
+        # Format the key
+        display_key = key.replace("_", " ").title()
+
+        # Format the value
+        if isinstance(value, dict):
+            lines.append(f"{prefix}{display_key}:")
+            lines.append(format_key_value(value, indent + 1, skip_empty))
+        elif isinstance(value, list):
+            if value:
+                lines.append(f"{prefix}{display_key}:")
+                for item in value:
+                    if isinstance(item, dict):
+                        lines.append(format_key_value(item, indent + 1, skip_empty))
+                    else:
+                        lines.append(f"{prefix}  - {item}")
+            else:
+                lines.append(f"{prefix}{display_key}: (none)")
+        else:
+            lines.append(f"{prefix}{display_key}: {value}")
+
+    return "\n".join(lines)
+
+
+# =============================================================================
+# JSON FORMATTING
+# =============================================================================
+
+def format_json(
+    data: Any,
+    indent: int = 2,
+    sort_keys: bool = False,
+) -> str:
+    """
+    Format data as pretty-printed JSON.
+
+    Args:
+        data: Data to format
+        indent: Indentation level
+        sort_keys: Sort dictionary keys
+
+    Returns:
+        Formatted JSON string
+    """
+    return json.dumps(data, indent=indent, sort_keys=sort_keys, default=str)
+
+
+# =============================================================================
+# DATE/TIME FORMATTING
+# =============================================================================
+
+def format_date(
+    value: Union[str, datetime, None],
+    format_str: str = "%Y-%m-%d",
+) -> str:
+    """
+    Format a date value.
+
+    Args:
+        value: Date string, datetime, or None
+        format_str: Output format string
+
+    Returns:
+        Formatted date string or empty string
+    """
+    if value is None:
+        return ""
+
+    if isinstance(value, str):
+        # Try to parse ISO format
+        try:
+            value = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError:
+            return value
+
+    if isinstance(value, datetime):
+        return value.strftime(format_str)
+
+    return str(value)
+
+
+def format_datetime(
+    value: Union[str, datetime, None],
+    format_str: str = "%Y-%m-%d %H:%M:%S",
+) -> str:
+    """
+    Format a datetime value.
+
+    Args:
+        value: Datetime string, datetime, or None
+        format_str: Output format string
+
+    Returns:
+        Formatted datetime string or empty string
+    """
+    return format_date(value, format_str)
+
+
+def format_relative_time(value: Union[str, datetime, None]) -> str:
+    """
+    Format a datetime as relative time (e.g., "2 hours ago").
+
+    Args:
+        value: Datetime string, datetime, or None
+
+    Returns:
+        Relative time string
+    """
+    if value is None:
+        return ""
+
+    if isinstance(value, str):
+        try:
+            value = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError:
+            return value
+
+    if not isinstance(value, datetime):
+        return str(value)
+
+    now = datetime.now(value.tzinfo) if value.tzinfo else datetime.now()
+    diff = now - value
+
+    seconds = diff.total_seconds()
+
+    if seconds < 60:
+        return "just now"
+    elif seconds < 3600:
+        minutes = int(seconds / 60)
+        return f"{minutes} minute{'s' if minutes != 1 else ''} ago"
+    elif seconds < 86400:
+        hours = int(seconds / 3600)
+        return f"{hours} hour{'s' if hours != 1 else ''} ago"
+    elif seconds < 604800:
+        days = int(seconds / 86400)
+        return f"{days} day{'s' if days != 1 else ''} ago"
+    else:
+        return format_date(value)
+
+
+# =============================================================================
+# TEXT UTILITIES
+# =============================================================================
+
+def truncate(
+    text: str,
+    max_length: int = 50,
+    suffix: str = "...",
+) -> str:
+    """
+    Truncate text to a maximum length.
+
+    Args:
+        text: Text to truncate
+        max_length: Maximum length (including suffix)
+        suffix: Suffix to add when truncated
+
+    Returns:
+        Truncated text
+    """
+    if not text:
+        return ""
+
+    if len(text) <= max_length:
+        return text
+
+    return text[: max_length - len(suffix)] + suffix
+
+
+def wrap_text(
+    text: str,
+    width: int = 80,
+    indent: str = "",
+) -> str:
+    """
+    Wrap text to a specified width.
+
+    Args:
+        text: Text to wrap
+        width: Maximum line width
+        indent: Indentation for wrapped lines
+
+    Returns:
+        Wrapped text
+    """
+    import textwrap
+    return textwrap.fill(text, width=width, subsequent_indent=indent)
+
+
+def pluralize(
+    count: int,
+    singular: str,
+    plural: Optional[str] = None,
+) -> str:
+    """
+    Return singular or plural form based on count.
+
+    Args:
+        count: Number of items
+        singular: Singular form
+        plural: Plural form (adds 's' if not provided)
+
+    Returns:
+        Formatted string with count and word
+    """
+    if plural is None:
+        plural = singular + "s"
+
+    word = singular if count == 1 else plural
+    return f"{count} {word}"

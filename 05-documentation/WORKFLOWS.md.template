@@ -1,0 +1,325 @@
+# WORKFLOWS.md Template
+
+## Purpose
+
+Document step-by-step workflows for common tasks.
+
+## Placeholders
+
+- `{{TOPIC}}` - Lowercase prefix
+- `{{API_NAME}}` - API name
+- `{{RESOURCE}}` - Resource name
+
+---
+
+# {{API_NAME}} Workflows
+
+Step-by-step guides for common operations.
+
+---
+
+## Quick Navigation
+
+- [Setting Up a New Resource](#setting-up-a-new-resource)
+- [Bulk Operations](#bulk-operations)
+- [Search and Export](#search-and-export)
+- [Troubleshooting Connection Issues](#troubleshooting-connection-issues)
+
+---
+
+## Setting Up a New Resource
+
+**Time:** ~5 minutes
+**Skills Used:** `{{TOPIC}}-{{resource}}`
+
+### Prerequisites
+
+- API credentials configured
+- Appropriate permissions
+
+### Steps
+
+#### Step 1: Verify Access
+
+```bash
+# Check connectivity and permissions
+python list_{{resource}}s.py --limit 1
+```
+
+Expected: Returns at least one {{resource}} or empty list (not error).
+
+#### Step 2: Create the Resource
+
+```bash
+python create_{{resource}}.py \
+  --name "My New {{Resource}}" \
+  --description "Created via Assistant Skills"
+```
+
+Expected: Returns the new {{resource}} ID.
+
+#### Step 3: Verify Creation
+
+```bash
+python get_{{resource}}.py {{RESOURCE_ID}}
+```
+
+Expected: Shows the newly created {{resource}} details.
+
+#### Step 4: Configure Settings (Optional)
+
+```bash
+python update_{{resource}}.py {{RESOURCE_ID}} \
+  --setting value
+```
+
+### Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| 403 Forbidden | Verify your account has create permissions |
+| 409 Conflict | Resource with that name may already exist |
+| 400 Bad Request | Check required fields are provided |
+
+---
+
+## Bulk Operations
+
+**Time:** Varies by count
+**Skills Used:** `{{TOPIC}}-{{resource}}`, `{{TOPIC}}-bulk`
+
+### Prerequisites
+
+- List of {{resource}} IDs to modify
+- Backup/documentation of current state
+
+### Steps
+
+#### Step 1: Export Current State (Backup)
+
+```bash
+# Save current state before bulk changes
+python list_{{resource}}s.py --output json > backup_before.json
+```
+
+#### Step 2: Preview Changes (Dry Run)
+
+```bash
+# Always preview before executing
+python bulk_update.py --ids "ID1,ID2,ID3" \
+  --set-status "archived" \
+  --dry-run
+```
+
+Review the output carefully.
+
+#### Step 3: Execute Bulk Operation
+
+```bash
+python bulk_update.py --ids "ID1,ID2,ID3" \
+  --set-status "archived"
+```
+
+#### Step 4: Verify Changes
+
+```bash
+# Check each modified resource
+for id in ID1 ID2 ID3; do
+  python get_{{resource}}.py $id --output json | jq '.status'
+done
+```
+
+### Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| Partial failure | Check error output for failed IDs, retry individually |
+| Rate limiting | Add --delay flag or reduce batch size |
+| Permission denied | Verify access to all resources in batch |
+
+---
+
+## Search and Export
+
+**Time:** ~2 minutes
+**Skills Used:** `{{TOPIC}}-search`
+
+### Prerequisites
+
+- Understanding of query syntax
+
+### Steps
+
+#### Step 1: Build Your Query
+
+```bash
+# Test query with limit first
+python search.py "status = active" --limit 5
+```
+
+#### Step 2: Refine Query
+
+```bash
+# Add more filters
+python search.py "status = active AND created >= 2024-01-01" --limit 10
+```
+
+#### Step 3: Export Results
+
+```bash
+# Export to JSON
+python search.py "status = active" --output json > results.json
+
+# Export to CSV (if supported)
+python export.py "status = active" --format csv --output results.csv
+```
+
+#### Step 4: Process Results
+
+```bash
+# Extract specific fields with jq
+cat results.json | jq '.[] | {id, name, status}'
+
+# Count results
+cat results.json | jq 'length'
+```
+
+### Query Examples
+
+| Goal | Query |
+|------|-------|
+| Active items | `status = active` |
+| Created this week | `created >= startOfWeek()` |
+| By specific user | `creator = "username"` |
+| Containing text | `text ~ "search term"` |
+| Multiple conditions | `status = active AND priority = high` |
+
+---
+
+## Troubleshooting Connection Issues
+
+**Skills Used:** N/A (configuration)
+
+### Symptoms
+
+- "Connection refused" errors
+- "401 Unauthorized" errors
+- Timeout errors
+
+### Steps
+
+#### Step 1: Verify Environment Variables
+
+```bash
+# Check variables are set
+echo ${{API_NAME}}_URL
+echo ${{API_NAME}}_API_TOKEN | head -c 10  # Show first 10 chars only
+```
+
+#### Step 2: Test API Connectivity
+
+```bash
+# Direct curl test
+curl -H "Authorization: Bearer ${{API_NAME}}_API_TOKEN" \
+  "${{API_NAME}}_URL/api/health"
+```
+
+#### Step 3: Verify Token Validity
+
+1. Go to {{API_NAME}} settings
+2. Check token expiration
+3. Regenerate if expired
+
+#### Step 4: Check Network
+
+```bash
+# Test DNS resolution
+nslookup $(echo ${{API_NAME}}_URL | sed 's|https://||' | cut -d/ -f1)
+
+# Test HTTPS connectivity
+openssl s_client -connect $(echo ${{API_NAME}}_URL | sed 's|https://||' | cut -d/ -f1):443
+```
+
+### Common Issues
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| 401 Unauthorized | Invalid/expired token | Regenerate API token |
+| 403 Forbidden | Insufficient permissions | Check account permissions |
+| Connection refused | Wrong URL or firewall | Verify URL and network |
+| Timeout | Slow network or API | Increase timeout in settings |
+| SSL Error | Certificate issue | Check system certificates |
+
+---
+
+## Multi-Skill Workflow Example
+
+**Scenario:** Find all old items and archive them
+
+### Steps
+
+#### 1. Search for Old Items
+
+```bash
+# Using search skill
+python search.py "status = active AND created < 2023-01-01" \
+  --output json > old_items.json
+
+# Count them
+cat old_items.json | jq 'length'
+```
+
+#### 2. Extract IDs
+
+```bash
+# Get just the IDs
+cat old_items.json | jq -r '.[].id' > old_ids.txt
+```
+
+#### 3. Preview Archive Operation
+
+```bash
+# Dry run first
+python bulk_update.py \
+  --ids-file old_ids.txt \
+  --set-status archived \
+  --dry-run
+```
+
+#### 4. Execute Archive
+
+```bash
+python bulk_update.py \
+  --ids-file old_ids.txt \
+  --set-status archived
+```
+
+#### 5. Verify
+
+```bash
+# Check a sample
+head -5 old_ids.txt | xargs -I {} python get_{{resource}}.py {} --output json | jq '.status'
+```
+
+---
+
+## Best Practices
+
+### Before Any Operation
+
+1. **Backup first** - Export current state to JSON
+2. **Dry run** - Use `--dry-run` when available
+3. **Start small** - Test with `--limit 1` first
+4. **Check permissions** - Verify access before bulk ops
+
+### During Operations
+
+1. **Monitor progress** - Watch for errors in output
+2. **Handle failures** - Note failed IDs for retry
+3. **Respect rate limits** - Use delays for large batches
+
+### After Operations
+
+1. **Verify changes** - Spot-check results
+2. **Document** - Note what was changed and when
+3. **Clean up** - Remove temporary files

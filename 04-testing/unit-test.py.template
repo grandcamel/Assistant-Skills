@@ -1,0 +1,337 @@
+#!/usr/bin/env python3
+"""
+Unit Test Template
+
+Placeholders:
+- {{TOPIC}} - Lowercase prefix
+- {{SKILL_NAME}} - Skill name
+- {{SCRIPT_NAME}} - Script name (e.g., "list_issues")
+- {{RESOURCE}} - Resource name (e.g., "issue")
+- {{API_ENDPOINT}} - API endpoint
+"""
+
+import json
+import pytest
+from unittest.mock import patch, MagicMock
+from io import StringIO
+import sys
+from pathlib import Path
+
+# Add scripts to path for testing
+sys.path.insert(0, str(Path(__file__).parent.parent / 'scripts'))
+
+
+class TestList{{Resource}}:
+    """Unit tests for list_{{resource}}.py"""
+
+    @pytest.fixture
+    def mock_client(self):
+        """Create a mock API client."""
+        client = MagicMock()
+        return client
+
+    @pytest.fixture
+    def sample_{{resource}}s(self):
+        """Sample {{resource}} data for tests."""
+        return [
+            {
+                'id': '1',
+                'name': 'Test {{Resource}} 1',
+                'status': 'active',
+                'created_at': '2024-01-01T00:00:00Z',
+            },
+            {
+                'id': '2',
+                'name': 'Test {{Resource}} 2',
+                'status': 'inactive',
+                'created_at': '2024-01-02T00:00:00Z',
+            },
+        ]
+
+    # =========================================================================
+    # HAPPY PATH TESTS
+    # =========================================================================
+
+    def test_list_returns_{{resource}}s(self, mock_client, sample_{{resource}}s):
+        """Should return list of {{resource}}s on success."""
+        mock_client.paginate.return_value = iter(sample_{{resource}}s)
+
+        with patch('list_{{resource}}.get_client', return_value=mock_client):
+            # Import after patching
+            from list_{{resource}} import main
+
+            with patch('sys.argv', ['list_{{resource}}.py']):
+                with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+                    main()
+
+        output = mock_stdout.getvalue()
+        assert 'Test {{Resource}} 1' in output
+        assert 'Test {{Resource}} 2' in output
+
+    def test_list_handles_empty_results(self, mock_client):
+        """Should handle empty result set gracefully."""
+        mock_client.paginate.return_value = iter([])
+
+        with patch('list_{{resource}}.get_client', return_value=mock_client):
+            from list_{{resource}} import main
+
+            with patch('sys.argv', ['list_{{resource}}.py']):
+                with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+                    main()
+
+        output = mock_stdout.getvalue()
+        assert 'No {{resource}}s found' in output or '0 {{resource}}s' in output
+
+    def test_list_respects_limit(self, mock_client, sample_{{resource}}s):
+        """Should limit results to specified count."""
+        mock_client.paginate.return_value = iter(sample_{{resource}}s[:1])
+
+        with patch('list_{{resource}}.get_client', return_value=mock_client):
+            from list_{{resource}} import main
+
+            with patch('sys.argv', ['list_{{resource}}.py', '--limit', '1']):
+                main()
+
+        # Verify paginate was called with correct limit
+        mock_client.paginate.assert_called_once()
+        call_kwargs = mock_client.paginate.call_args
+        assert call_kwargs[1].get('max_results') == 1 or 'limit' in str(call_kwargs)
+
+    def test_list_json_output(self, mock_client, sample_{{resource}}s):
+        """Should return valid JSON when --output json."""
+        mock_client.paginate.return_value = iter(sample_{{resource}}s)
+
+        with patch('list_{{resource}}.get_client', return_value=mock_client):
+            from list_{{resource}} import main
+
+            with patch('sys.argv', ['list_{{resource}}.py', '--output', 'json']):
+                with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+                    main()
+
+        output = mock_stdout.getvalue()
+        # Should contain valid JSON (may have success message after)
+        json_part = output.split('\n')[0] if '\n' in output else output
+        try:
+            data = json.loads(json_part)
+            assert isinstance(data, list)
+        except json.JSONDecodeError:
+            # Check if JSON is somewhere in output
+            assert '[' in output and ']' in output
+
+    def test_list_uses_profile(self, mock_client, sample_{{resource}}s):
+        """Should pass profile to client."""
+        mock_client.paginate.return_value = iter(sample_{{resource}}s)
+
+        with patch('list_{{resource}}.get_client', return_value=mock_client) as mock_get:
+            from list_{{resource}} import main
+
+            with patch('sys.argv', ['list_{{resource}}.py', '--profile', 'development']):
+                main()
+
+        mock_get.assert_called_once_with(profile='development')
+
+    # =========================================================================
+    # ERROR HANDLING TESTS
+    # =========================================================================
+
+    def test_handles_auth_error(self, mock_client):
+        """Should handle 401 Unauthorized."""
+        from error_handler import AuthenticationError
+
+        mock_client.paginate.side_effect = AuthenticationError('Invalid token')
+
+        with patch('list_{{resource}}.get_client', return_value=mock_client):
+            from list_{{resource}} import main
+
+            with patch('sys.argv', ['list_{{resource}}.py']):
+                with pytest.raises(SystemExit) as exc_info:
+                    main()
+
+        assert exc_info.value.code == 1
+
+    def test_handles_permission_error(self, mock_client):
+        """Should handle 403 Forbidden."""
+        from error_handler import PermissionError
+
+        mock_client.paginate.side_effect = PermissionError('Access denied')
+
+        with patch('list_{{resource}}.get_client', return_value=mock_client):
+            from list_{{resource}} import main
+
+            with patch('sys.argv', ['list_{{resource}}.py']):
+                with pytest.raises(SystemExit) as exc_info:
+                    main()
+
+        assert exc_info.value.code == 1
+
+    def test_handles_rate_limit(self, mock_client):
+        """Should handle 429 Rate Limited."""
+        from error_handler import RateLimitError
+
+        mock_client.paginate.side_effect = RateLimitError('Too many requests')
+
+        with patch('list_{{resource}}.get_client', return_value=mock_client):
+            from list_{{resource}} import main
+
+            with patch('sys.argv', ['list_{{resource}}.py']):
+                with pytest.raises(SystemExit) as exc_info:
+                    main()
+
+        assert exc_info.value.code == 1
+
+
+class TestGet{{Resource}}:
+    """Unit tests for get_{{resource}}.py"""
+
+    @pytest.fixture
+    def mock_client(self):
+        """Create a mock API client."""
+        return MagicMock()
+
+    @pytest.fixture
+    def sample_{{resource}}(self):
+        """Sample {{resource}} data."""
+        return {
+            'id': '12345',
+            'name': 'Test {{Resource}}',
+            'description': 'A test {{resource}}',
+            'status': 'active',
+            'created_at': '2024-01-01T00:00:00Z',
+        }
+
+    def test_get_returns_{{resource}}(self, mock_client, sample_{{resource}}):
+        """Should return {{resource}} details."""
+        mock_client.get.return_value = sample_{{resource}}
+
+        with patch('get_{{resource}}.get_client', return_value=mock_client):
+            from get_{{resource}} import main
+
+            with patch('sys.argv', ['get_{{resource}}.py', '12345']):
+                with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+                    main()
+
+        output = mock_stdout.getvalue()
+        assert 'Test {{Resource}}' in output
+
+    def test_get_validates_id(self):
+        """Should validate {{resource}} ID format."""
+        with patch('sys.argv', ['get_{{resource}}.py', '']):
+            from get_{{resource}} import main
+
+            with pytest.raises(SystemExit):
+                main()
+
+    def test_get_handles_not_found(self, mock_client):
+        """Should handle 404 Not Found."""
+        from error_handler import NotFoundError
+
+        mock_client.get.side_effect = NotFoundError('{{Resource}} not found')
+
+        with patch('get_{{resource}}.get_client', return_value=mock_client):
+            from get_{{resource}} import main
+
+            with patch('sys.argv', ['get_{{resource}}.py', '99999']):
+                with pytest.raises(SystemExit) as exc_info:
+                    main()
+
+        assert exc_info.value.code == 1
+
+
+class TestCreate{{Resource}}:
+    """Unit tests for create_{{resource}}.py"""
+
+    @pytest.fixture
+    def mock_client(self):
+        """Create a mock API client."""
+        return MagicMock()
+
+    def test_create_with_required_fields(self, mock_client):
+        """Should create {{resource}} with required fields."""
+        mock_client.post.return_value = {'id': 'new-123', 'name': 'New {{Resource}}'}
+
+        with patch('create_{{resource}}.get_client', return_value=mock_client):
+            from create_{{resource}} import main
+
+            with patch('sys.argv', ['create_{{resource}}.py', '--name', 'New {{Resource}}']):
+                with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+                    main()
+
+        mock_client.post.assert_called_once()
+        output = mock_stdout.getvalue()
+        assert 'Created' in output or 'new-123' in output
+
+    def test_create_validates_required_name(self):
+        """Should require name argument."""
+        with patch('sys.argv', ['create_{{resource}}.py']):
+            from create_{{resource}} import main
+
+            with pytest.raises(SystemExit):
+                main()
+
+    def test_create_includes_optional_fields(self, mock_client):
+        """Should include optional fields when provided."""
+        mock_client.post.return_value = {'id': 'new-123'}
+
+        with patch('create_{{resource}}.get_client', return_value=mock_client):
+            from create_{{resource}} import main
+
+            with patch('sys.argv', [
+                'create_{{resource}}.py',
+                '--name', 'New {{Resource}}',
+                '--description', 'Test description'
+            ]):
+                main()
+
+        call_args = mock_client.post.call_args
+        payload = call_args[1].get('json_data', call_args[0][1] if len(call_args[0]) > 1 else {})
+        assert payload.get('description') == 'Test description'
+
+
+class TestDelete{{Resource}}:
+    """Unit tests for delete_{{resource}}.py"""
+
+    @pytest.fixture
+    def mock_client(self):
+        """Create a mock API client."""
+        return MagicMock()
+
+    def test_delete_with_force(self, mock_client):
+        """Should delete without confirmation when --force."""
+        mock_client.get.return_value = {'id': '123', 'name': 'Test'}
+        mock_client.delete.return_value = {}
+
+        with patch('delete_{{resource}}.get_client', return_value=mock_client):
+            from delete_{{resource}} import main
+
+            with patch('sys.argv', ['delete_{{resource}}.py', '123', '--force']):
+                with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+                    main()
+
+        mock_client.delete.assert_called_once()
+        assert 'Deleted' in mock_stdout.getvalue()
+
+    def test_delete_dry_run(self, mock_client):
+        """Should not delete with --dry-run."""
+        mock_client.get.return_value = {'id': '123', 'name': 'Test'}
+
+        with patch('delete_{{resource}}.get_client', return_value=mock_client):
+            from delete_{{resource}} import main
+
+            with patch('sys.argv', ['delete_{{resource}}.py', '123', '--dry-run']):
+                with patch('sys.stdout', new_callable=StringIO):
+                    main()
+
+        mock_client.delete.assert_not_called()
+
+    def test_delete_prompts_for_confirmation(self, mock_client):
+        """Should prompt for confirmation without --force."""
+        mock_client.get.return_value = {'id': '123', 'name': 'Test'}
+
+        with patch('delete_{{resource}}.get_client', return_value=mock_client):
+            from delete_{{resource}} import main
+
+            with patch('sys.argv', ['delete_{{resource}}.py', '123']):
+                with patch('builtins.input', return_value='n'):
+                    main()
+
+        mock_client.delete.assert_not_called()

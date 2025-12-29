@@ -1,0 +1,370 @@
+#!/usr/bin/env python3
+"""
+Script Template
+
+Placeholders:
+- {{SCRIPT_NAME}} - Name of the script (e.g., "list_issues")
+- {{SCRIPT_DESCRIPTION}} - One-line description
+- {{API_ENDPOINT}} - API endpoint (e.g., "/api/v1/issues")
+- {{RESOURCE}} - Resource name (e.g., "issue", "user")
+- {{TOPIC}} - Topic prefix
+- {{SKILL_NAME}} - Skill name
+"""
+
+# =============================================================================
+# TEMPLATE: list_{{resource}}.py
+# =============================================================================
+
+#!/usr/bin/env python3
+"""
+List {{resource}}s with optional filtering.
+
+Examples:
+    python list_{{resource}}.py
+    python list_{{resource}}.py --filter "status=active"
+    python list_{{resource}}.py --limit 100 --output json
+    python list_{{resource}}.py --profile development
+"""
+
+import argparse
+import sys
+from pathlib import Path
+
+# Add shared library to path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'shared' / 'scripts' / 'lib'))
+
+from config_manager import get_client
+from error_handler import handle_errors
+from formatters import print_success, format_table, format_json, pluralize
+
+
+@handle_errors
+def main():
+    parser = argparse.ArgumentParser(
+        description='List {{resource}}s',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog='''
+Examples:
+  python list_{{resource}}.py
+  python list_{{resource}}.py --filter "status=active"
+  python list_{{resource}}.py --limit 100 --output json
+  python list_{{resource}}.py --profile development
+'''
+    )
+    parser.add_argument('--filter', '-f', help='Filter expression')
+    parser.add_argument('--limit', '-l', type=int, default=50, help='Maximum results')
+    parser.add_argument('--profile', '-p', help='Configuration profile')
+    parser.add_argument('--output', '-o', choices=['text', 'json'], default='text',
+                        help='Output format')
+    args = parser.parse_args()
+
+    # Get client
+    client = get_client(profile=args.profile)
+
+    # Build params
+    params = {'limit': args.limit}
+    if args.filter:
+        params['filter'] = args.filter
+
+    # Fetch {{resource}}s
+    results = list(client.paginate('{{API_ENDPOINT}}', params=params, max_results=args.limit))
+
+    # Output
+    if args.output == 'json':
+        print(format_json(results))
+    else:
+        if results:
+            print(format_table(results, keys=['id', 'name', 'status', 'created_at']))
+        else:
+            print('No {{resource}}s found')
+
+    print_success(pluralize(len(results), '{{resource}}', '{{resource}}s') + ' found')
+
+
+if __name__ == '__main__':
+    main()
+
+
+# =============================================================================
+# TEMPLATE: get_{{resource}}.py
+# =============================================================================
+
+#!/usr/bin/env python3
+"""
+Get details of a specific {{resource}}.
+
+Examples:
+    python get_{{resource}}.py ID
+    python get_{{resource}}.py ID --output json
+    python get_{{resource}}.py ID --profile development
+"""
+
+import argparse
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'shared' / 'scripts' / 'lib'))
+
+from config_manager import get_client
+from error_handler import handle_errors
+from validators import validate_id
+from formatters import print_success, format_key_value, format_json
+
+
+@handle_errors
+def main():
+    parser = argparse.ArgumentParser(
+        description='Get {{resource}} details',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog='''
+Examples:
+  python get_{{resource}}.py 12345
+  python get_{{resource}}.py 12345 --output json
+'''
+    )
+    parser.add_argument('id', help='{{Resource}} ID')
+    parser.add_argument('--profile', '-p', help='Configuration profile')
+    parser.add_argument('--output', '-o', choices=['text', 'json'], default='text')
+    args = parser.parse_args()
+
+    # Validate
+    resource_id = validate_id(args.id, '{{Resource}} ID')
+
+    # Get client
+    client = get_client(profile=args.profile)
+
+    # Fetch {{resource}}
+    result = client.get(f'{{API_ENDPOINT}}/{resource_id}')
+
+    # Output
+    if args.output == 'json':
+        print(format_json(result))
+    else:
+        print(format_key_value(result))
+
+    print_success(f"Retrieved {{resource}} {result.get('id', resource_id)}")
+
+
+if __name__ == '__main__':
+    main()
+
+
+# =============================================================================
+# TEMPLATE: create_{{resource}}.py
+# =============================================================================
+
+#!/usr/bin/env python3
+"""
+Create a new {{resource}}.
+
+Examples:
+    python create_{{resource}}.py --name "My {{Resource}}"
+    python create_{{resource}}.py --name "My {{Resource}}" --description "Details"
+    python create_{{resource}}.py --name "My {{Resource}}" --output json
+"""
+
+import argparse
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'shared' / 'scripts' / 'lib'))
+
+from config_manager import get_client
+from error_handler import handle_errors
+from validators import validate_required
+from formatters import print_success, format_key_value, format_json
+
+
+@handle_errors
+def main():
+    parser = argparse.ArgumentParser(
+        description='Create a {{resource}}',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog='''
+Examples:
+  python create_{{resource}}.py --name "My {{Resource}}"
+  python create_{{resource}}.py --name "My {{Resource}}" --description "Details"
+'''
+    )
+    parser.add_argument('--name', '-n', required=True, help='{{Resource}} name')
+    parser.add_argument('--description', '-d', help='{{Resource}} description')
+    parser.add_argument('--profile', '-p', help='Configuration profile')
+    parser.add_argument('--output', '-o', choices=['text', 'json'], default='text')
+    args = parser.parse_args()
+
+    # Validate
+    name = validate_required(args.name, 'Name')
+
+    # Get client
+    client = get_client(profile=args.profile)
+
+    # Build payload
+    payload = {'name': name}
+    if args.description:
+        payload['description'] = args.description
+
+    # Create {{resource}}
+    result = client.post('{{API_ENDPOINT}}', json_data=payload)
+
+    # Output
+    if args.output == 'json':
+        print(format_json(result))
+    else:
+        print(format_key_value(result))
+
+    print_success(f"Created {{resource}}: {result.get('id')}")
+
+
+if __name__ == '__main__':
+    main()
+
+
+# =============================================================================
+# TEMPLATE: update_{{resource}}.py
+# =============================================================================
+
+#!/usr/bin/env python3
+"""
+Update an existing {{resource}}.
+
+Examples:
+    python update_{{resource}}.py ID --name "New Name"
+    python update_{{resource}}.py ID --description "New description"
+"""
+
+import argparse
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'shared' / 'scripts' / 'lib'))
+
+from config_manager import get_client
+from error_handler import handle_errors
+from validators import validate_id
+from formatters import print_success, format_key_value, format_json
+
+
+@handle_errors
+def main():
+    parser = argparse.ArgumentParser(
+        description='Update a {{resource}}',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog='''
+Examples:
+  python update_{{resource}}.py 12345 --name "New Name"
+  python update_{{resource}}.py 12345 --description "New description"
+'''
+    )
+    parser.add_argument('id', help='{{Resource}} ID')
+    parser.add_argument('--name', '-n', help='New name')
+    parser.add_argument('--description', '-d', help='New description')
+    parser.add_argument('--profile', '-p', help='Configuration profile')
+    parser.add_argument('--output', '-o', choices=['text', 'json'], default='text')
+    args = parser.parse_args()
+
+    # Validate
+    resource_id = validate_id(args.id, '{{Resource}} ID')
+
+    # Check at least one update provided
+    if not any([args.name, args.description]):
+        parser.error('At least one update field required (--name, --description)')
+
+    # Get client
+    client = get_client(profile=args.profile)
+
+    # Build payload
+    payload = {}
+    if args.name:
+        payload['name'] = args.name
+    if args.description:
+        payload['description'] = args.description
+
+    # Update {{resource}}
+    result = client.put(f'{{API_ENDPOINT}}/{resource_id}', json_data=payload)
+
+    # Output
+    if args.output == 'json':
+        print(format_json(result))
+    else:
+        print(format_key_value(result))
+
+    print_success(f"Updated {{resource}}: {resource_id}")
+
+
+if __name__ == '__main__':
+    main()
+
+
+# =============================================================================
+# TEMPLATE: delete_{{resource}}.py
+# =============================================================================
+
+#!/usr/bin/env python3
+"""
+Delete a {{resource}}.
+
+Examples:
+    python delete_{{resource}}.py ID
+    python delete_{{resource}}.py ID --dry-run
+    python delete_{{resource}}.py ID --force
+"""
+
+import argparse
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'shared' / 'scripts' / 'lib'))
+
+from config_manager import get_client
+from error_handler import handle_errors
+from validators import validate_id
+from formatters import print_success, print_warning
+
+
+@handle_errors
+def main():
+    parser = argparse.ArgumentParser(
+        description='Delete a {{resource}}',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog='''
+Examples:
+  python delete_{{resource}}.py 12345
+  python delete_{{resource}}.py 12345 --dry-run
+  python delete_{{resource}}.py 12345 --force
+'''
+    )
+    parser.add_argument('id', help='{{Resource}} ID')
+    parser.add_argument('--dry-run', action='store_true', help='Preview without deleting')
+    parser.add_argument('--force', '-f', action='store_true', help='Skip confirmation')
+    parser.add_argument('--profile', '-p', help='Configuration profile')
+    args = parser.parse_args()
+
+    # Validate
+    resource_id = validate_id(args.id, '{{Resource}} ID')
+
+    # Get client
+    client = get_client(profile=args.profile)
+
+    # Fetch for confirmation
+    resource = client.get(f'{{API_ENDPOINT}}/{resource_id}')
+    resource_name = resource.get('name', resource_id)
+
+    if args.dry_run:
+        print_warning(f"[DRY RUN] Would delete {{resource}}: {resource_name} ({resource_id})")
+        return
+
+    # Confirm unless forced
+    if not args.force:
+        confirm = input(f"Delete {{resource}} '{resource_name}' ({resource_id})? [y/N]: ")
+        if confirm.lower() != 'y':
+            print('Cancelled')
+            return
+
+    # Delete
+    client.delete(f'{{API_ENDPOINT}}/{resource_id}')
+
+    print_success(f"Deleted {{resource}}: {resource_name} ({resource_id})")
+
+
+if __name__ == '__main__':
+    main()

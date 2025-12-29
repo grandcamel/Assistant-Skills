@@ -1,0 +1,184 @@
+# CLAUDE.md Template
+
+## Purpose
+
+Template for the CLAUDE.md file that guides Claude Code when working with the project.
+
+## Placeholders
+
+- `{{PROJECT_NAME}}` - Full project name
+- `{{API_NAME}}` - Friendly API name
+- `{{TOPIC}}` - Lowercase skill prefix
+- `{{SKILL_TABLE}}` - Markdown table of skills
+- `{{ENV_VARS}}` - Environment variables needed
+
+---
+
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+This is a Claude Code Skills project providing {{API_NAME}} automation through modular skills:
+
+{{SKILL_TABLE}}
+
+Each skill is designed for autonomous discovery and use by Claude Code.
+
+## Architecture
+
+### Shared Library Pattern
+
+All skills depend on a shared library at `.claude/skills/shared/scripts/lib/` containing:
+
+- **client.py**: HTTP client with automatic retry (3 attempts, exponential backoff on 429/5xx)
+- **config_manager.py**: Multi-source configuration merging (env vars > settings.local.json > settings.json > defaults)
+- **error_handler.py**: Exception hierarchy that maps HTTP status codes to domain exceptions
+- **validators.py**: Input validation for common patterns
+- **formatters.py**: Output formatting (tables, JSON, success/error messages)
+
+**Import pattern**: All scripts use:
+```python
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'shared' / 'scripts' / 'lib'))
+```
+
+### Configuration System
+
+Configuration is merged from 4 sources (priority order):
+1. Environment variables: {{ENV_VARS}}
+2. `.claude/settings.local.json` (gitignored, personal credentials)
+3. `.claude/settings.json` (committed, team defaults with profiles)
+4. Hardcoded defaults in config_manager.py
+
+**Profile-based**: Supports multiple {{API_NAME}} instances (dev/staging/prod).
+
+### Error Handling Strategy
+
+4-layer approach:
+1. **Pre-validation**: validators.py catches bad input before API calls
+2. **API errors**: error_handler.handle_error() maps status codes to exceptions
+3. **Retry logic**: Client retries on [429, 500, 502, 503, 504] with exponential backoff
+4. **User messages**: Exceptions include contextual troubleshooting hints
+
+## Testing Scripts
+
+All scripts are executable and support `--help`. Test with credentials:
+
+```bash
+# Setup
+pip install -r .claude/skills/shared/scripts/lib/requirements.txt
+export {{API_NAME}}_API_TOKEN="your-token"
+export {{API_NAME}}_URL="https://api.example.com"
+
+# Test basic connectivity
+python .claude/skills/{{TOPIC}}-{skill}/scripts/list_{resource}.py
+
+# Test with specific profile
+python .claude/skills/{{TOPIC}}-{skill}/scripts/get_{resource}.py ID --profile development
+```
+
+## Adding New Scripts
+
+When adding scripts to existing skills:
+
+1. **Location**: Place in appropriate skill's `scripts/` directory
+2. **Imports**: Use the standard path injection pattern
+3. **CLI**: Use argparse with descriptive help, examples in epilog
+4. **Error handling**: Catch errors, call print_error(), sys.exit(1)
+5. **Profile support**: Add `--profile` argument
+6. **Make executable**: `chmod +x script.py` and add shebang
+7. **Update SKILL.md**: Document the new script
+
+## Adding New Skills
+
+Skills must follow this structure:
+
+```
+.claude/skills/{{TOPIC}}-{name}/
+├── SKILL.md              # Description for autonomous discovery
+├── scripts/              # Executable Python scripts
+│   └── __init__.py
+├── tests/                # Unit tests
+│   ├── __init__.py
+│   ├── conftest.py
+│   └── live_integration/
+├── docs/                 # Extended documentation
+└── assets/templates/     # JSON templates (optional)
+```
+
+**SKILL.md format**:
+- YAML frontmatter with name, description, when_to_use
+- "What this skill does" with feature list
+- "Available scripts" with descriptions
+- "Examples" with concrete bash commands
+
+## Git Commit Guidelines
+
+This project follows Conventional Commits.
+
+### Commit Types
+
+- **feat**: New feature or functionality
+- **fix**: Bug fix
+- **docs**: Documentation changes only
+- **test**: Adding or updating tests
+- **refactor**: Code changes without behavior change
+- **chore**: Other maintenance changes
+
+### Scopes
+
+Use skill names as scopes:
+- `feat({{TOPIC}}-{skill}): add new operation`
+- `fix(shared): correct retry logic`
+- `test({{TOPIC}}-{skill}): add integration tests`
+
+### TDD Commit Pattern
+
+When using TDD:
+
+```bash
+# Commit 1: Add failing tests
+test({{TOPIC}}-{skill}): add failing tests for feature_name
+
+# Commit 2: Implement to pass tests
+feat({{TOPIC}}-{skill}): implement feature_name (N/N tests passing)
+```
+
+Always include test counts in implementation commits.
+
+## Live Integration Testing
+
+```bash
+# Run all live integration tests
+pytest .claude/skills/shared/tests/live_integration/ --profile development -v
+
+# Run skill-specific tests
+pytest .claude/skills/{{TOPIC}}-{skill}/tests/live_integration/ --profile development -v
+```
+
+**Test structure**: Tests use session-scoped fixtures for setup/cleanup.
+
+**Profile requirement**: Live tests require `--profile` to specify target instance.
+
+## Key Constraints
+
+- **Python 3.8+**: Minimum version
+- **No external CLI tools**: All operations via Python/requests
+- **Profile-aware**: All scripts must support `--profile` override
+- **Validation first**: Validate before API calls
+- **HTTP client reuse**: Use get_client() for session management
+
+## Credentials Security
+
+**Never commit**:
+- `.claude/settings.local.json`
+- API tokens in any file
+- Environment variable files (`.env`)
+
+**Always**:
+- Use environment variables for tokens
+- Validate URLs (HTTPS-only)
+- Document required permissions in skill docs

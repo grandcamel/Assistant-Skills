@@ -1,0 +1,191 @@
+# README.md Template
+
+## Purpose
+
+Template for user-facing README.md documentation.
+
+## Placeholders
+
+- `{{PROJECT_NAME}}` - Full project name
+- `{{API_NAME}}` - Friendly API name
+- `{{TOPIC}}` - Lowercase skill prefix
+- `{{DESCRIPTION}}` - One-line project description
+- `{{SKILL_COUNT}}` - Number of skills
+- `{{SCRIPT_COUNT}}` - Number of scripts
+- `{{SKILLS_TABLE}}` - Markdown table of skills
+
+---
+
+# {{PROJECT_NAME}}
+
+{{DESCRIPTION}}
+
+## Features
+
+- **Natural Language Interface**: Interact with {{API_NAME}} using plain English
+- **{{SKILL_COUNT}} Specialized Skills**: Covering all major {{API_NAME}} operations
+- **Multi-Profile Support**: Switch between different instances
+- **Robust Error Handling**: Clear error messages with suggestions
+- **{{SCRIPT_COUNT}}+ Scripts**: Production-ready Python scripts
+
+## Quick Start
+
+### 1. Install Dependencies
+
+```bash
+pip install -r .claude/skills/shared/scripts/lib/requirements.txt
+```
+
+### 2. Get API Credentials
+
+<!-- Customize with API-specific instructions -->
+1. Navigate to your account settings
+2. Generate an API token
+3. Copy the token
+
+### 3. Configure
+
+```bash
+export {{API_NAME}}_API_TOKEN="your-token"
+export {{API_NAME}}_EMAIL="your@email.com"
+export {{API_NAME}}_URL="https://api.example.com"
+```
+
+Or create `.claude/settings.local.json`:
+
+```json
+{
+  "{{TOPIC}}": {
+    "url": "https://api.example.com",
+    "email": "your@email.com",
+    "api_token": "your-token"
+  }
+}
+```
+
+### 4. Start Using
+
+```bash
+# Just ask Claude
+claude "List all resources"
+claude "Create a new item"
+claude "Search for items matching 'query'"
+```
+
+## Available Skills
+
+{{SKILLS_TABLE}}
+
+## Example Commands
+
+### Basic Operations
+
+```bash
+# List resources
+python .claude/skills/{{TOPIC}}-{skill}/scripts/list_{resource}.py
+
+# Get a specific resource
+python .claude/skills/{{TOPIC}}-{skill}/scripts/get_{resource}.py ID
+
+# Create a resource
+python .claude/skills/{{TOPIC}}-{skill}/scripts/create_{resource}.py \
+  --name "Name" --description "Description"
+
+# Update a resource
+python .claude/skills/{{TOPIC}}-{skill}/scripts/update_{resource}.py ID \
+  --name "New Name"
+
+# Delete a resource
+python .claude/skills/{{TOPIC}}-{skill}/scripts/delete_{resource}.py ID
+```
+
+### Search Operations
+
+```bash
+# Basic search
+python .claude/skills/{{TOPIC}}-search/scripts/search.py "query"
+
+# With filters
+python .claude/skills/{{TOPIC}}-search/scripts/search.py "query" \
+  --type resource --status active
+```
+
+## Configuration
+
+### Multiple Profiles
+
+```json
+{
+  "{{TOPIC}}": {
+    "default_profile": "production",
+    "profiles": {
+      "production": {
+        "url": "https://api.example.com",
+        "default_project": "PROD"
+      },
+      "development": {
+        "url": "https://api-dev.example.com",
+        "default_project": "DEV"
+      }
+    }
+  }
+}
+```
+
+Use profiles:
+
+```bash
+python script.py --profile development
+```
+
+## Project Structure
+
+```
+.claude/
+├── settings.json          # Team settings
+├── settings.local.json    # Personal settings (gitignored)
+└── skills/
+    ├── {{TOPIC}}-assistant/   # Hub/router skill
+    ├── {{TOPIC}}-{skill}/     # Specialized skills
+    └── shared/
+        ├── scripts/lib/       # Shared Python library
+        ├── config/            # Config schema
+        └── tests/             # Shared test fixtures
+```
+
+## Development
+
+### Running Tests
+
+```bash
+# Unit tests
+pytest .claude/skills/*/tests/ -v --ignore="**/live_integration"
+
+# Live integration tests (requires --profile)
+pytest .claude/skills/*/tests/live_integration/ --profile=development -v
+
+# With coverage
+pytest --cov=.claude/skills/shared/scripts/lib --cov-report=html
+```
+
+### Adding Scripts
+
+See `CLAUDE.md` for the full development guide.
+
+## API Reference
+
+Documentation: <!-- Add API docs URL -->
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests
+5. Submit a pull request
+
+Please follow [Conventional Commits](https://www.conventionalcommits.org/) for commit messages.

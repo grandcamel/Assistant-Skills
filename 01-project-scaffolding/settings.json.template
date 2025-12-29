@@ -1,0 +1,42 @@
+{
+  "$schema": "./skills/shared/config/config.schema.json",
+
+  "{{TOPIC}}": {
+    "default_profile": "default",
+
+    "profiles": {
+      "default": {
+        "url": "",
+        "default_resource": ""
+      },
+      "development": {
+        "url": "",
+        "default_resource": ""
+      },
+      "production": {
+        "url": "",
+        "default_resource": ""
+      }
+    },
+
+    "api": {
+      "version": "v1",
+      "timeout": 30,
+      "max_retries": 3,
+      "retry_backoff": 2.0,
+      "page_size": 50
+    },
+
+    "output": {
+      "default_format": "text",
+      "date_format": "YYYY-MM-DD",
+      "datetime_format": "YYYY-MM-DD HH:mm:ss"
+    }
+  },
+
+  "skills": {
+    "{{TOPIC}}-assistant": {
+      "description": "{{API_NAME}} Assistant - Routes to specialized skills"
+    }
+  }
+}

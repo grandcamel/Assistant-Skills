@@ -1,0 +1,263 @@
+# QUICK-REFERENCE.md Template
+
+## Purpose
+
+One-page command cheat sheet for all scripts.
+
+## Placeholders
+
+- `{{TOPIC}}` - Lowercase prefix
+- `{{API_NAME}}` - API name
+- `{{SKILLS_TABLE}}` - Table of all skills and scripts
+
+---
+
+# {{API_NAME}} Quick Reference
+
+One-page reference for all commands.
+
+---
+
+## Environment Setup
+
+```bash
+# Required
+export {{API_NAME}}_URL="https://api.example.com"
+export {{API_NAME}}_API_TOKEN="your-token"
+
+# Optional
+export {{API_NAME}}_EMAIL="your@email.com"
+export {{API_NAME}}_PROFILE="default"
+```
+
+---
+
+## Common Flags
+
+All scripts support these flags:
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--help` | `-h` | Show usage and examples |
+| `--profile` | `-p` | Configuration profile |
+| `--output` | `-o` | Output format (text/json) |
+
+---
+
+## Skills Overview
+
+{{SKILLS_TABLE}}
+
+---
+
+## Resource CRUD Operations
+
+### List Resources
+
+```bash
+python list_resources.py                        # List all
+python list_resources.py --limit 10             # Limit results
+python list_resources.py --filter "key=value"   # Filter
+python list_resources.py --output json          # JSON output
+```
+
+### Get Resource
+
+```bash
+python get_resource.py ID                       # Get by ID
+python get_resource.py ID --output json         # JSON output
+```
+
+### Create Resource
+
+```bash
+python create_resource.py --name "Name"                    # Minimal
+python create_resource.py --name "Name" --desc "Details"   # With description
+```
+
+### Update Resource
+
+```bash
+python update_resource.py ID --name "New Name"
+python update_resource.py ID --status "active"
+```
+
+### Delete Resource
+
+```bash
+python delete_resource.py ID                    # With confirmation
+python delete_resource.py ID --force            # Skip confirmation
+python delete_resource.py ID --dry-run          # Preview only
+```
+
+---
+
+## Search Operations
+
+### Basic Search
+
+```bash
+python search.py "query"                        # Simple text search
+python search.py "field = value"                # Field search
+python search.py "status = active"              # Status filter
+```
+
+### Advanced Search
+
+```bash
+python search.py "status = active AND priority = high"
+python search.py "created >= 2024-01-01"
+python search.py "text ~ 'keyword'"
+```
+
+### Search with Export
+
+```bash
+python search.py "query" --output json > results.json
+python search.py "query" --limit 1000 --output json
+```
+
+---
+
+## Bulk Operations
+
+### Bulk Update
+
+```bash
+python bulk_update.py --ids "ID1,ID2,ID3" --set-field value
+python bulk_update.py --ids-file ids.txt --set-status archived
+python bulk_update.py --query "status=old" --set-status archived --dry-run
+```
+
+### Bulk Delete
+
+```bash
+python bulk_delete.py --ids "ID1,ID2,ID3" --dry-run
+python bulk_delete.py --ids "ID1,ID2,ID3" --force
+```
+
+---
+
+## Profile Usage
+
+```bash
+# Use specific profile
+python command.py --profile development
+python command.py --profile production
+
+# Set default via environment
+export {{API_NAME}}_PROFILE="development"
+```
+
+---
+
+## Output Formats
+
+### Text (Default)
+
+```bash
+python list_resources.py
+# ID          Name            Status
+# res-123     Resource 1      active
+# res-456     Resource 2      inactive
+```
+
+### JSON
+
+```bash
+python list_resources.py --output json
+# [{"id": "res-123", "name": "Resource 1", ...}]
+```
+
+### JSON Processing with jq
+
+```bash
+# Extract field
+python get_resource.py ID --output json | jq '.name'
+
+# Filter list
+python list_resources.py --output json | jq '.[] | select(.status=="active")'
+
+# Count results
+python list_resources.py --output json | jq 'length'
+
+# Format output
+python list_resources.py --output json | jq -r '.[] | "\(.id)\t\(.name)"'
+```
+
+---
+
+## Common Patterns
+
+### Create and Capture ID
+
+```bash
+ID=$(python create_resource.py --name "Name" --output json | jq -r '.id')
+echo "Created: $ID"
+```
+
+### Loop Through Results
+
+```bash
+python list_resources.py --output json | jq -r '.[].id' | while read id; do
+    python update_resource.py "$id" --status "processed"
+done
+```
+
+### Conditional Operations
+
+```bash
+# Only process if exists
+if python get_resource.py ID 2>/dev/null; then
+    python update_resource.py ID --status "verified"
+fi
+```
+
+### Export and Transform
+
+```bash
+# Export active resources to CSV
+python list_resources.py --output json | \
+    jq -r '.[] | select(.status=="active") | [.id, .name] | @csv' > active.csv
+```
+
+---
+
+## Error Codes
+
+| Exit Code | Meaning |
+|-----------|---------|
+| 0 | Success |
+| 1 | Error (see stderr for details) |
+| 130 | Interrupted (Ctrl+C) |
+
+---
+
+## Quick Troubleshooting
+
+```bash
+# Test connectivity
+python list_resources.py --limit 1
+
+# Check configuration
+echo ${{API_NAME}}_URL
+echo ${{API_NAME}}_API_TOKEN | head -c 10
+
+# Verbose output (if supported)
+python command.py --debug
+
+# Get help
+python command.py --help
+```
+
+---
+
+## Shortcuts
+
+| Task | Command |
+|------|---------|
+| List all | `python list_resources.py` |
+| Find by name | `python search.py "name ~ 'keyword'"` |
+| Export to JSON | `python list_resources.py -o json > data.json` |
+| Count results | `python list_resources.py -o json \| jq length` |
+| Quick delete | `python delete_resource.py ID -f` |

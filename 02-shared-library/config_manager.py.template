@@ -1,0 +1,190 @@
+#!/usr/bin/env python3
+"""
+Configuration Manager Template
+
+Placeholders:
+- {{API_NAME}} - API name for env var prefix (e.g., "GITHUB")
+- {{TOPIC}} - Lowercase prefix (e.g., "github")
+"""
+
+import json
+import os
+from pathlib import Path
+from typing import Any, Dict, Optional
+
+# Environment variable names
+ENV_URL = "{{API_NAME}}_URL"
+ENV_TOKEN = "{{API_NAME}}_API_TOKEN"
+ENV_EMAIL = "{{API_NAME}}_EMAIL"
+ENV_PROFILE = "{{API_NAME}}_PROFILE"
+
+# Default values
+DEFAULTS = {
+    "url": "",
+    "api_token": "",
+    "email": "",
+    "timeout": 30,
+    "page_size": 50,
+    "output_format": "text",
+}
+
+
+def _find_project_root() -> Path:
+    """Find the project root by looking for .claude directory."""
+    current = Path.cwd()
+
+    # Walk up looking for .claude
+    for parent in [current] + list(current.parents):
+        if (parent / ".claude").is_dir():
+            return parent
+
+    # Fallback to current directory
+    return current
+
+
+def _load_json_file(path: Path) -> Dict[str, Any]:
+    """Load a JSON file, returning empty dict if not found."""
+    if path.exists():
+        try:
+            with open(path, "r") as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError) as e:
+            print(f"Warning: Could not load {path}: {e}")
+    return {}
+
+
+def _get_env_config() -> Dict[str, Any]:
+    """Get configuration from environment variables."""
+    config = {}
+
+    if os.environ.get(ENV_URL):
+        config["url"] = os.environ[ENV_URL]
+    if os.environ.get(ENV_TOKEN):
+        config["api_token"] = os.environ[ENV_TOKEN]
+    if os.environ.get(ENV_EMAIL):
+        config["email"] = os.environ[ENV_EMAIL]
+
+    return config
+
+
+def _merge_configs(*configs: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Merge multiple config dicts, later ones taking precedence.
+
+    Only non-empty values override previous values.
+    """
+    result = {}
+    for config in configs:
+        for key, value in config.items():
+            # Only override if value is truthy (not empty string, None, etc.)
+            if value or key not in result:
+                result[key] = value
+    return result
+
+
+def get_config(profile: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Get merged configuration from all sources.
+
+    Priority (highest to lowest):
+    1. Environment variables
+    2. .claude/settings.local.json (profile)
+    3. .claude/settings.json (profile)
+    4. Defaults
+
+    Args:
+        profile: Profile name to use (overrides env/default)
+
+    Returns:
+        Merged configuration dictionary
+    """
+    project_root = _find_project_root()
+    claude_dir = project_root / ".claude"
+
+    # Determine profile
+    if profile is None:
+        profile = os.environ.get(ENV_PROFILE, "default")
+
+    # Load settings files
+    settings_path = claude_dir / "settings.json"
+    local_settings_path = claude_dir / "settings.local.json"
+
+    settings = _load_json_file(settings_path)
+    local_settings = _load_json_file(local_settings_path)
+
+    # Extract profile-specific config
+    def get_profile_config(data: Dict, profile_name: str) -> Dict:
+        """Extract profile config from settings structure."""
+        topic_config = data.get("{{TOPIC}}", {})
+        profiles = topic_config.get("profiles", {})
+
+        # Get profile config, falling back to default
+        profile_config = profiles.get(profile_name, profiles.get("default", {}))
+
+        # Merge with top-level topic config (excluding profiles)
+        base_config = {k: v for k, v in topic_config.items() if k != "profiles"}
+
+        return _merge_configs(base_config, profile_config)
+
+    # Build config layers
+    default_config = DEFAULTS.copy()
+    settings_config = get_profile_config(settings, profile)
+    local_config = get_profile_config(local_settings, profile)
+    env_config = _get_env_config()
+
+    # Merge all layers
+    final_config = _merge_configs(
+        default_config,
+        settings_config,
+        local_config,
+        env_config,
+    )
+
+    # Validate required fields
+    if not final_config.get("url"):
+        raise ValueError(
+            f"API URL not configured. Set {ENV_URL} or configure in settings.json"
+        )
+    if not final_config.get("api_token"):
+        raise ValueError(
+            f"API token not configured. Set {ENV_TOKEN} or configure in settings.local.json"
+        )
+
+    return final_config
+
+
+def get_profile_names() -> list:
+    """Get list of available profile names."""
+    project_root = _find_project_root()
+    settings_path = project_root / ".claude" / "settings.json"
+    local_settings_path = project_root / ".claude" / "settings.local.json"
+
+    profiles = set()
+
+    for path in [settings_path, local_settings_path]:
+        data = _load_json_file(path)
+        topic_config = data.get("{{TOPIC}}", {})
+        profile_configs = topic_config.get("profiles", {})
+        profiles.update(profile_configs.keys())
+
+    return sorted(profiles)
+
+
+def get_default_profile() -> str:
+    """Get the default profile name."""
+    return os.environ.get(ENV_PROFILE, "default")
+
+
+# Convenience function for getting a configured client
+def get_{{TOPIC}}_client(profile: Optional[str] = None):
+    """
+    Get a configured {{API_NAME}} client.
+
+    Args:
+        profile: Profile name (optional)
+
+    Returns:
+        Configured client instance
+    """
+    from .client import get_client
+    return get_client(profile=profile)

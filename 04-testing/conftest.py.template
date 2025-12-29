@@ -1,0 +1,250 @@
+#!/usr/bin/env python3
+"""
+Pytest Conftest Template
+
+Placeholders:
+- {{TOPIC}} - Lowercase prefix
+- {{API_NAME}} - API name for fixtures
+"""
+
+import os
+import sys
+from pathlib import Path
+from typing import Dict, Any, Generator
+from unittest.mock import MagicMock, patch
+
+import pytest
+
+# Add shared library to path
+SHARED_LIB = Path(__file__).parent.parent.parent / 'shared' / 'scripts' / 'lib'
+sys.path.insert(0, str(SHARED_LIB))
+
+
+# =============================================================================
+# CONFIGURATION FIXTURES
+# =============================================================================
+
+@pytest.fixture
+def mock_config() -> Dict[str, Any]:
+    """Provide mock configuration for tests."""
+    return {
+        'url': 'https://api.example.com',
+        'api_token': 'test-token-12345',
+        'email': 'test@example.com',
+        'timeout': 30,
+        'page_size': 50,
+    }
+
+
+@pytest.fixture
+def mock_env_vars(mock_config):
+    """Set mock environment variables."""
+    env_vars = {
+        '{{API_NAME}}_URL': mock_config['url'],
+        '{{API_NAME}}_API_TOKEN': mock_config['api_token'],
+        '{{API_NAME}}_EMAIL': mock_config['email'],
+    }
+    with patch.dict(os.environ, env_vars, clear=False):
+        yield env_vars
+
+
+@pytest.fixture(autouse=True)
+def reset_modules():
+    """Reset module imports between tests."""
+    # Remove any cached script imports
+    modules_to_remove = [
+        key for key in sys.modules.keys()
+        if key.startswith('list_') or key.startswith('get_') or
+           key.startswith('create_') or key.startswith('update_') or
+           key.startswith('delete_')
+    ]
+    for module in modules_to_remove:
+        del sys.modules[module]
+    yield
+
+
+# =============================================================================
+# API CLIENT FIXTURES
+# =============================================================================
+
+@pytest.fixture
+def mock_client() -> MagicMock:
+    """Provide a mock API client."""
+    client = MagicMock()
+
+    # Default successful responses
+    client.get.return_value = {}
+    client.post.return_value = {}
+    client.put.return_value = {}
+    client.patch.return_value = {}
+    client.delete.return_value = {}
+    client.paginate.return_value = iter([])
+
+    return client
+
+
+@pytest.fixture
+def patched_client(mock_client):
+    """Patch get_client to return mock."""
+    with patch('config_manager.get_client', return_value=mock_client):
+        yield mock_client
+
+
+# =============================================================================
+# SAMPLE DATA FIXTURES
+# =============================================================================
+
+@pytest.fixture
+def sample_resource() -> Dict[str, Any]:
+    """Provide a sample resource object."""
+    return {
+        'id': 'res-12345',
+        'name': 'Test Resource',
+        'description': 'A test resource for unit testing',
+        'status': 'active',
+        'created_at': '2024-01-01T00:00:00Z',
+        'updated_at': '2024-01-02T00:00:00Z',
+    }
+
+
+@pytest.fixture
+def sample_resources(sample_resource) -> list:
+    """Provide a list of sample resources."""
+    return [
+        sample_resource,
+        {
+            'id': 'res-67890',
+            'name': 'Another Resource',
+            'description': 'Another test resource',
+            'status': 'inactive',
+            'created_at': '2024-01-03T00:00:00Z',
+            'updated_at': '2024-01-04T00:00:00Z',
+        },
+    ]
+
+
+# =============================================================================
+# ERROR FIXTURES
+# =============================================================================
+
+@pytest.fixture
+def auth_error():
+    """Provide an authentication error."""
+    from error_handler import AuthenticationError
+    return AuthenticationError('Invalid or expired token')
+
+
+@pytest.fixture
+def permission_error():
+    """Provide a permission error."""
+    from error_handler import PermissionError
+    return PermissionError('Access denied')
+
+
+@pytest.fixture
+def not_found_error():
+    """Provide a not found error."""
+    from error_handler import NotFoundError
+    return NotFoundError('Resource not found')
+
+
+@pytest.fixture
+def rate_limit_error():
+    """Provide a rate limit error."""
+    from error_handler import RateLimitError
+    return RateLimitError('Rate limit exceeded', retry_after=60)
+
+
+@pytest.fixture
+def validation_error():
+    """Provide a validation error."""
+    from error_handler import ValidationError
+    return ValidationError('Invalid input')
+
+
+# =============================================================================
+# OUTPUT CAPTURE FIXTURES
+# =============================================================================
+
+@pytest.fixture
+def capture_stdout():
+    """Capture stdout for testing output."""
+    from io import StringIO
+    captured = StringIO()
+    with patch('sys.stdout', captured):
+        yield captured
+
+
+@pytest.fixture
+def capture_stderr():
+    """Capture stderr for testing error output."""
+    from io import StringIO
+    captured = StringIO()
+    with patch('sys.stderr', captured):
+        yield captured
+
+
+# =============================================================================
+# COMMAND LINE FIXTURES
+# =============================================================================
+
+@pytest.fixture
+def cli_args():
+    """Factory fixture for setting CLI arguments."""
+    original_argv = sys.argv.copy()
+
+    def _set_args(args: list):
+        sys.argv = args
+        return args
+
+    yield _set_args
+
+    sys.argv = original_argv
+
+
+# =============================================================================
+# PYTEST CONFIGURATION
+# =============================================================================
+
+def pytest_configure(config):
+    """Configure pytest markers."""
+    config.addinivalue_line(
+        "markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')"
+    )
+    config.addinivalue_line(
+        "markers", "integration: marks tests as integration tests"
+    )
+    config.addinivalue_line(
+        "markers", "live: marks tests requiring live API access"
+    )
+
+
+def pytest_addoption(parser):
+    """Add custom command line options."""
+    parser.addoption(
+        "--profile",
+        action="store",
+        default="test",
+        help="Configuration profile for live tests",
+    )
+    parser.addoption(
+        "--skip-slow",
+        action="store_true",
+        default=False,
+        help="Skip slow tests",
+    )
+
+
+def pytest_collection_modifyitems(config, items):
+    """Modify test collection based on options."""
+    if config.getoption("--skip-slow"):
+        skip_slow = pytest.mark.skip(reason="--skip-slow option provided")
+        for item in items:
+            if "slow" in item.keywords:
+                item.add_marker(skip_slow)
+
+
+@pytest.fixture
+def profile(request):
+    """Get the profile from command line."""
+    return request.config.getoption("--profile")

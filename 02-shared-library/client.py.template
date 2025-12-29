@@ -1,0 +1,383 @@
+#!/usr/bin/env python3
+"""
+HTTP Client Template
+
+Placeholders:
+- {{API_NAME}} - API name (e.g., "GitHub")
+- {{CLIENT_CLASS}} - Client class name (e.g., "GitHubClient")
+- {{AUTH_HEADER}} - Auth header name (e.g., "Authorization")
+- {{AUTH_FORMAT}} - Auth format (e.g., "Bearer {token}", "token {token}")
+- {{PAGINATION_STYLE}} - offset, cursor, page, or link
+"""
+
+import logging
+import time
+from typing import Any, Dict, Generator, Optional
+from urllib.parse import urljoin
+
+import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+
+from .error_handler import handle_api_error, {{API_NAME}}Error, RateLimitError
+
+logger = logging.getLogger(__name__)
+
+
+class {{CLIENT_CLASS}}:
+    """HTTP client for {{API_NAME}} API with retry and rate limit handling."""
+
+    RETRY_STATUS_CODES = [429, 500, 502, 503, 504]
+    MAX_RETRIES = 3
+    BACKOFF_FACTOR = 2.0
+    DEFAULT_TIMEOUT = 30
+
+    def __init__(
+        self,
+        base_url: str,
+        token: str,
+        email: Optional[str] = None,
+        timeout: int = DEFAULT_TIMEOUT,
+    ):
+        """
+        Initialize the client.
+
+        Args:
+            base_url: API base URL (e.g., "https://api.example.com")
+            token: API authentication token
+            email: User email (if required by API)
+            timeout: Request timeout in seconds
+        """
+        self.base_url = base_url.rstrip("/")
+        self.token = token
+        self.email = email
+        self.timeout = timeout
+        self._session = self._create_session()
+
+    def _create_session(self) -> requests.Session:
+        """Create a session with retry logic."""
+        session = requests.Session()
+
+        # Configure retry strategy
+        retry_strategy = Retry(
+            total=self.MAX_RETRIES,
+            backoff_factor=self.BACKOFF_FACTOR,
+            status_forcelist=self.RETRY_STATUS_CODES,
+            allowed_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+            raise_on_status=False,
+        )
+
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        session.mount("http://", adapter)
+        session.mount("https://", adapter)
+
+        # Set default headers
+        session.headers.update({
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "{{AUTH_HEADER}}": "{{AUTH_FORMAT}}".format(token=self.token),
+        })
+
+        # Add email header if required
+        if self.email:
+            session.headers["X-User-Email"] = self.email
+
+        return session
+
+    def _make_request(
+        self,
+        method: str,
+        endpoint: str,
+        params: Optional[Dict] = None,
+        json_data: Optional[Dict] = None,
+        **kwargs,
+    ) -> requests.Response:
+        """
+        Make an HTTP request with error handling.
+
+        Args:
+            method: HTTP method (GET, POST, PUT, PATCH, DELETE)
+            endpoint: API endpoint (relative to base_url)
+            params: Query parameters
+            json_data: JSON body data
+            **kwargs: Additional request arguments
+
+        Returns:
+            Response object
+
+        Raises:
+            {{API_NAME}}Error: On API errors
+        """
+        url = urljoin(self.base_url + "/", endpoint.lstrip("/"))
+
+        logger.debug(f"{method} {url}")
+        if params:
+            logger.debug(f"Params: {params}")
+        if json_data:
+            logger.debug(f"Body: {json_data}")
+
+        try:
+            response = self._session.request(
+                method=method,
+                url=url,
+                params=params,
+                json=json_data,
+                timeout=self.timeout,
+                **kwargs,
+            )
+
+            # Handle rate limiting with custom retry
+            if response.status_code == 429:
+                retry_after = self._get_retry_after(response)
+                logger.warning(f"Rate limited. Waiting {retry_after}s")
+                time.sleep(retry_after)
+                return self._make_request(method, endpoint, params, json_data, **kwargs)
+
+            # Check for errors
+            if not response.ok:
+                handle_api_error(response)
+
+            return response
+
+        except requests.exceptions.Timeout:
+            raise {{API_NAME}}Error(f"Request timed out after {self.timeout}s")
+        except requests.exceptions.ConnectionError as e:
+            raise {{API_NAME}}Error(f"Connection error: {e}")
+
+    def _get_retry_after(self, response: requests.Response) -> int:
+        """Extract retry-after from rate limit response."""
+        # Try standard header
+        retry_after = response.headers.get("Retry-After")
+        if retry_after:
+            try:
+                return int(retry_after)
+            except ValueError:
+                pass
+
+        # Try X-RateLimit-Reset header (Unix timestamp)
+        reset_time = response.headers.get("X-RateLimit-Reset")
+        if reset_time:
+            try:
+                return max(1, int(reset_time) - int(time.time()))
+            except ValueError:
+                pass
+
+        # Default wait time
+        return 60
+
+    def get(
+        self,
+        endpoint: str,
+        params: Optional[Dict] = None,
+        **kwargs,
+    ) -> Dict[str, Any]:
+        """Make a GET request."""
+        response = self._make_request("GET", endpoint, params=params, **kwargs)
+        return response.json() if response.text else {}
+
+    def post(
+        self,
+        endpoint: str,
+        json_data: Optional[Dict] = None,
+        params: Optional[Dict] = None,
+        **kwargs,
+    ) -> Dict[str, Any]:
+        """Make a POST request."""
+        response = self._make_request(
+            "POST", endpoint, params=params, json_data=json_data, **kwargs
+        )
+        return response.json() if response.text else {}
+
+    def put(
+        self,
+        endpoint: str,
+        json_data: Optional[Dict] = None,
+        params: Optional[Dict] = None,
+        **kwargs,
+    ) -> Dict[str, Any]:
+        """Make a PUT request."""
+        response = self._make_request(
+            "PUT", endpoint, params=params, json_data=json_data, **kwargs
+        )
+        return response.json() if response.text else {}
+
+    def patch(
+        self,
+        endpoint: str,
+        json_data: Optional[Dict] = None,
+        params: Optional[Dict] = None,
+        **kwargs,
+    ) -> Dict[str, Any]:
+        """Make a PATCH request."""
+        response = self._make_request(
+            "PATCH", endpoint, params=params, json_data=json_data, **kwargs
+        )
+        return response.json() if response.text else {}
+
+    def delete(
+        self,
+        endpoint: str,
+        params: Optional[Dict] = None,
+        **kwargs,
+    ) -> Dict[str, Any]:
+        """Make a DELETE request."""
+        response = self._make_request("DELETE", endpoint, params=params, **kwargs)
+        return response.json() if response.text else {}
+
+    # =========================================================================
+    # PAGINATION HELPERS - Choose one based on {{PAGINATION_STYLE}}
+    # =========================================================================
+
+    # --- OFFSET-BASED PAGINATION ---
+    def paginate_offset(
+        self,
+        endpoint: str,
+        params: Optional[Dict] = None,
+        limit: int = 50,
+        max_results: Optional[int] = None,
+    ) -> Generator[Dict, None, None]:
+        """
+        Paginate through results using offset-based pagination.
+
+        Args:
+            endpoint: API endpoint
+            params: Additional query parameters
+            limit: Results per page
+            max_results: Maximum total results (None for all)
+
+        Yields:
+            Individual result items
+        """
+        params = params or {}
+        offset = 0
+        total_yielded = 0
+
+        while True:
+            params.update({"limit": limit, "offset": offset})
+            response = self.get(endpoint, params=params)
+
+            items = response.get("values", response.get("results", response.get("items", [])))
+            if not items:
+                break
+
+            for item in items:
+                yield item
+                total_yielded += 1
+                if max_results and total_yielded >= max_results:
+                    return
+
+            # Check if more pages
+            if len(items) < limit:
+                break
+
+            offset += limit
+
+    # --- CURSOR-BASED PAGINATION ---
+    def paginate_cursor(
+        self,
+        endpoint: str,
+        params: Optional[Dict] = None,
+        limit: int = 50,
+        max_results: Optional[int] = None,
+        cursor_field: str = "cursor",
+    ) -> Generator[Dict, None, None]:
+        """
+        Paginate through results using cursor-based pagination.
+
+        Args:
+            endpoint: API endpoint
+            params: Additional query parameters
+            limit: Results per page
+            max_results: Maximum total results
+            cursor_field: Name of cursor field in response
+
+        Yields:
+            Individual result items
+        """
+        params = params or {}
+        params["limit"] = limit
+        cursor = None
+        total_yielded = 0
+
+        while True:
+            if cursor:
+                params[cursor_field] = cursor
+
+            response = self.get(endpoint, params=params)
+
+            items = response.get("values", response.get("results", response.get("items", [])))
+            for item in items:
+                yield item
+                total_yielded += 1
+                if max_results and total_yielded >= max_results:
+                    return
+
+            # Get next cursor
+            cursor = response.get("next_cursor", response.get("nextCursor"))
+            if not cursor or not items:
+                break
+
+    # --- PAGE-BASED PAGINATION ---
+    def paginate_page(
+        self,
+        endpoint: str,
+        params: Optional[Dict] = None,
+        per_page: int = 50,
+        max_results: Optional[int] = None,
+    ) -> Generator[Dict, None, None]:
+        """
+        Paginate through results using page number pagination.
+
+        Args:
+            endpoint: API endpoint
+            params: Additional query parameters
+            per_page: Results per page
+            max_results: Maximum total results
+
+        Yields:
+            Individual result items
+        """
+        params = params or {}
+        page = 1
+        total_yielded = 0
+
+        while True:
+            params.update({"page": page, "per_page": per_page})
+            response = self.get(endpoint, params=params)
+
+            items = response.get("values", response.get("results", response.get("items", [])))
+            if not items:
+                break
+
+            for item in items:
+                yield item
+                total_yielded += 1
+                if max_results and total_yielded >= max_results:
+                    return
+
+            if len(items) < per_page:
+                break
+
+            page += 1
+
+
+def get_client(profile: Optional[str] = None) -> {{CLIENT_CLASS}}:
+    """
+    Get a configured client instance.
+
+    Args:
+        profile: Configuration profile name
+
+    Returns:
+        Configured {{CLIENT_CLASS}} instance
+    """
+    from .config_manager import get_config
+
+    config = get_config(profile=profile)
+
+    return {{CLIENT_CLASS}}(
+        base_url=config["url"],
+        token=config["api_token"],
+        email=config.get("email"),
+        timeout=config.get("timeout", {{CLIENT_CLASS}}.DEFAULT_TIMEOUT),
+    )

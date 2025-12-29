@@ -1,0 +1,237 @@
+#!/usr/bin/env python3
+"""
+Error Handler Template
+
+Placeholders:
+- {{API_NAME}} - API name (e.g., "GitHub")
+"""
+
+import functools
+import sys
+from typing import Callable, Optional
+
+import requests
+
+
+# =============================================================================
+# EXCEPTION HIERARCHY
+# =============================================================================
+
+class {{API_NAME}}Error(Exception):
+    """Base exception for all {{API_NAME}} API errors."""
+
+    def __init__(self, message: str, status_code: Optional[int] = None):
+        self.message = message
+        self.status_code = status_code
+        super().__init__(message)
+
+
+class AuthenticationError({{API_NAME}}Error):
+    """Authentication failed (401)."""
+
+    def __init__(self, message: str = "Authentication failed"):
+        super().__init__(
+            f"{message}\n\n"
+            "Troubleshooting:\n"
+            "  1. Check that your API token is valid\n"
+            "  2. Verify the token has not expired\n"
+            "  3. Ensure the token is correctly set in environment or settings",
+            status_code=401,
+        )
+
+
+class PermissionError({{API_NAME}}Error):
+    """Permission denied (403)."""
+
+    def __init__(self, message: str = "Permission denied"):
+        super().__init__(
+            f"{message}\n\n"
+            "Troubleshooting:\n"
+            "  1. Verify your account has required permissions\n"
+            "  2. Check if the resource requires special access\n"
+            "  3. Contact your administrator for permission grants",
+            status_code=403,
+        )
+
+
+class NotFoundError({{API_NAME}}Error):
+    """Resource not found (404)."""
+
+    def __init__(self, message: str = "Resource not found"):
+        super().__init__(
+            f"{message}\n\n"
+            "Troubleshooting:\n"
+            "  1. Verify the ID or key is correct\n"
+            "  2. Check if the resource exists\n"
+            "  3. Ensure you have access to view the resource",
+            status_code=404,
+        )
+
+
+class ValidationError({{API_NAME}}Error):
+    """Invalid input or request (400)."""
+
+    def __init__(self, message: str = "Invalid request"):
+        super().__init__(
+            f"{message}\n\n"
+            "Troubleshooting:\n"
+            "  1. Check the input values are in correct format\n"
+            "  2. Verify required fields are provided\n"
+            "  3. Run script with --help for usage",
+            status_code=400,
+        )
+
+
+class RateLimitError({{API_NAME}}Error):
+    """Rate limit exceeded (429)."""
+
+    def __init__(self, message: str = "Rate limit exceeded", retry_after: int = 60):
+        super().__init__(
+            f"{message}\n\n"
+            f"Try again in {retry_after} seconds.\n"
+            "Troubleshooting:\n"
+            "  1. Wait for the rate limit to reset\n"
+            "  2. Reduce request frequency\n"
+            "  3. Consider using bulk operations",
+            status_code=429,
+        )
+        self.retry_after = retry_after
+
+
+class ConflictError({{API_NAME}}Error):
+    """Resource conflict (409)."""
+
+    def __init__(self, message: str = "Resource conflict"):
+        super().__init__(
+            f"{message}\n\n"
+            "Troubleshooting:\n"
+            "  1. The resource may already exist\n"
+            "  2. Another operation may be in progress\n"
+            "  3. Try refreshing and retrying",
+            status_code=409,
+        )
+
+
+class ServerError({{API_NAME}}Error):
+    """Server error (5xx)."""
+
+    def __init__(self, message: str = "Server error"):
+        super().__init__(
+            f"{message}\n\n"
+            "Troubleshooting:\n"
+            "  1. The service may be temporarily unavailable\n"
+            "  2. Wait a moment and try again\n"
+            "  3. Check the service status page",
+            status_code=500,
+        )
+
+
+# =============================================================================
+# ERROR HANDLING FUNCTIONS
+# =============================================================================
+
+def handle_api_error(response: requests.Response) -> None:
+    """
+    Handle an API error response by raising the appropriate exception.
+
+    Args:
+        response: The HTTP response object
+
+    Raises:
+        Appropriate {{API_NAME}}Error subclass
+    """
+    status_code = response.status_code
+
+    # Try to extract error message from response
+    try:
+        data = response.json()
+        message = (
+            data.get("message")
+            or data.get("error")
+            or data.get("errorMessages", [None])[0]
+            or str(data)
+        )
+    except (ValueError, KeyError, IndexError):
+        message = response.text or f"HTTP {status_code}"
+
+    # Map status codes to exceptions
+    if status_code == 400:
+        raise ValidationError(message)
+    elif status_code == 401:
+        raise AuthenticationError(message)
+    elif status_code == 403:
+        raise PermissionError(message)
+    elif status_code == 404:
+        raise NotFoundError(message)
+    elif status_code == 409:
+        raise ConflictError(message)
+    elif status_code == 429:
+        retry_after = int(response.headers.get("Retry-After", 60))
+        raise RateLimitError(message, retry_after=retry_after)
+    elif 500 <= status_code < 600:
+        raise ServerError(message)
+    else:
+        raise {{API_NAME}}Error(f"HTTP {status_code}: {message}", status_code=status_code)
+
+
+def handle_errors(func: Callable) -> Callable:
+    """
+    Decorator to handle errors in script main functions.
+
+    Usage:
+        @handle_errors
+        def main():
+            # Your script logic
+            pass
+
+        if __name__ == "__main__":
+            main()
+    """
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except {{API_NAME}}Error as e:
+            print_error(str(e))
+            sys.exit(1)
+        except KeyboardInterrupt:
+            print("\nOperation cancelled by user")
+            sys.exit(130)
+        except Exception as e:
+            print_error(f"Unexpected error: {e}")
+            sys.exit(1)
+
+    return wrapper
+
+
+# =============================================================================
+# OUTPUT FUNCTIONS
+# =============================================================================
+
+def print_error(message: str, exception: Optional[Exception] = None) -> None:
+    """
+    Print an error message to stderr.
+
+    Args:
+        message: Error message
+        exception: Optional exception for additional details
+    """
+    # Red X emoji (works in most terminals)
+    prefix = "✗"
+
+    print(f"\n{prefix} Error: {message}", file=sys.stderr)
+
+    if exception and str(exception) != message:
+        print(f"\nDetails: {exception}", file=sys.stderr)
+
+
+def print_warning(message: str) -> None:
+    """
+    Print a warning message.
+
+    Args:
+        message: Warning message
+    """
+    prefix = "⚠"
+    print(f"{prefix} Warning: {message}", file=sys.stderr)
