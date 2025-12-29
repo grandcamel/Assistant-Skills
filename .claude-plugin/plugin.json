@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "Templates and tools for building Claude Code Assistant Skills projects. Includes project scaffolding, skill creation wizards, and optimization tools.",
   "author": {
-    "name": "jasonkrueger",
-    "url": "https://github.com/jasonkrueger"
+    "name": "Jason Krueger",
+    "url": "https://github.com/grandcamel"
   },
-  "repository": "https://github.com/jasonkrueger/Assistant-Skills",
+  "repository": "https://github.com/grandcamel/Assistant-Skills",
   "license": "MIT",
   "keywords": [
     "assistant-skills",

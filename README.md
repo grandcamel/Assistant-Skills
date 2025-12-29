@@ -8,7 +8,7 @@ A Claude Code plugin with templates and tools for building Assistant Skills proj
 
 ```bash
 # Clone the repository
-git clone https://github.com/jasonkrueger/Assistant-Skills.git
+git clone https://github.com/grandcamel/Assistant-Skills.git
 
 # Install as plugin (from Claude Code)
 /install-plugin /path/to/Assistant-Skills
@@ -16,7 +16,7 @@ git clone https://github.com/jasonkrueger/Assistant-Skills.git
 
 Or install directly from GitHub:
 ```bash
-/install-plugin https://github.com/jasonkrueger/Assistant-Skills
+/install-plugin https://github.com/grandcamel/Assistant-Skills
 ```
 
 ### Manual Installation
