@@ -19,10 +19,5 @@
     "library-publisher"
   ],
   "skills": "./skills/",
-  "hooks": "./hooks/hooks.json",
-  "dependencies": {
-    "python": {
-      "assistant-skills-lib": ">=0.1.0"
-    }
-  }
+  "hooks": "./hooks/hooks.json"
 }
