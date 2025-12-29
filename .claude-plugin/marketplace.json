@@ -15,7 +15,7 @@
         "name": "Jason Krueger",
         "url": "https://github.com/grandcamel"
       },
-      "source": ".",
+      "source": "./",
       "category": "development",
       "homepage": "https://github.com/grandcamel/Assistant-Skills",
       "tags": ["skills", "scaffolding", "templates", "optimization"]
