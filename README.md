@@ -34,6 +34,7 @@ cp -r skills/* ~/.claude/skills/
 |-------|-------------|
 | `assistant-builder` | Interactive wizard for creating new Assistant Skills projects |
 | `skills-optimizer` | Audit and optimize skills for token efficiency |
+| `landing-page` | Generate professional README landing pages with branding |
 
 ### assistant-builder
 
@@ -60,6 +61,18 @@ Audit skills for token efficiency and progressive disclosure compliance.
 
 # Audit all skills
 ./skills/skills-optimizer/scripts/audit-all-skills.sh ~/.claude/skills
+```
+
+### landing-page
+
+Generate professional README landing pages for Assistant Skills projects.
+
+```bash
+# Analyze project for README generation
+python skills/landing-page/scripts/analyze_project.py /path/to/project
+
+# Generate logo SVG
+python skills/landing-page/scripts/generate_logo.py --name jira --primary "#0052CC"
 ```
 
 ---
@@ -121,6 +134,7 @@ Assistant-Skills/
 ├── skills/
 │   ├── assistant-builder/   # Project scaffolding skill
 │   ├── skills-optimizer/    # Optimization skill
+│   ├── landing-page/        # README branding skill
 │   └── shared/              # Shared library
 ├── 00-project-lifecycle/    # Templates
 ├── 01-project-scaffolding/

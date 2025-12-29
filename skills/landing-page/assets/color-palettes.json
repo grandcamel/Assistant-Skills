@@ -1,0 +1,114 @@
+{
+  "palettes": {
+    "atlassian": {
+      "description": "Default Atlassian brand colors (JIRA, Confluence, Bitbucket)",
+      "primary": "#0052CC",
+      "accent": "#4a00e0",
+      "cursor": "#00C7E6",
+      "badge": "0052CC",
+      "bg_start": "#1a1a2e",
+      "bg_end": "#16213e"
+    },
+    "jira": {
+      "description": "JIRA Software brand colors",
+      "primary": "#0052CC",
+      "accent": "#4a00e0",
+      "cursor": "#00C7E6",
+      "badge": "FF6B6B",
+      "bg_start": "#1a1a2e",
+      "bg_end": "#16213e"
+    },
+    "confluence": {
+      "description": "Confluence brand colors with green accent",
+      "primary": "#0052CC",
+      "accent": "#36B37E",
+      "cursor": "#00C7E6",
+      "badge": "36B37E",
+      "bg_start": "#1a1a2e",
+      "bg_end": "#16213e"
+    },
+    "splunk": {
+      "description": "Splunk brand colors - orange and green",
+      "primary": "#FF6900",
+      "accent": "#65A637",
+      "cursor": "#00C7E6",
+      "badge": "FF6900",
+      "bg_start": "#1a1a2e",
+      "bg_end": "#16213e"
+    },
+    "github": {
+      "description": "GitHub brand colors",
+      "primary": "#238636",
+      "accent": "#1f6feb",
+      "cursor": "#00C7E6",
+      "badge": "238636",
+      "bg_start": "#0d1117",
+      "bg_end": "#161b22"
+    },
+    "gitlab": {
+      "description": "GitLab brand colors - orange and purple",
+      "primary": "#FC6D26",
+      "accent": "#6E49CB",
+      "cursor": "#00C7E6",
+      "badge": "FC6D26",
+      "bg_start": "#1a1a2e",
+      "bg_end": "#16213e"
+    },
+    "datadog": {
+      "description": "Datadog brand colors - purple and coral",
+      "primary": "#632CA6",
+      "accent": "#FF6B6B",
+      "cursor": "#00C7E6",
+      "badge": "632CA6",
+      "bg_start": "#1a1a2e",
+      "bg_end": "#16213e"
+    },
+    "elastic": {
+      "description": "Elasticsearch/Elastic brand colors",
+      "primary": "#00BFB3",
+      "accent": "#F04E98",
+      "cursor": "#FEC514",
+      "badge": "00BFB3",
+      "bg_start": "#1a1a2e",
+      "bg_end": "#16213e"
+    },
+    "aws": {
+      "description": "AWS brand colors - orange",
+      "primary": "#FF9900",
+      "accent": "#232F3E",
+      "cursor": "#00C7E6",
+      "badge": "FF9900",
+      "bg_start": "#1a1a2e",
+      "bg_end": "#232F3E"
+    },
+    "azure": {
+      "description": "Microsoft Azure brand colors",
+      "primary": "#0078D4",
+      "accent": "#50E6FF",
+      "cursor": "#00C7E6",
+      "badge": "0078D4",
+      "bg_start": "#1a1a2e",
+      "bg_end": "#16213e"
+    },
+    "generic": {
+      "description": "Generic purple/indigo palette",
+      "primary": "#6366F1",
+      "accent": "#8B5CF6",
+      "cursor": "#00C7E6",
+      "badge": "6366F1",
+      "bg_start": "#1a1a2e",
+      "bg_end": "#16213e"
+    }
+  },
+  "query_languages": {
+    "jira": "JQL",
+    "confluence": "CQL",
+    "splunk": "SPL",
+    "elasticsearch": "Query DSL",
+    "datadog": "Query Language",
+    "grafana": "PromQL",
+    "prometheus": "PromQL",
+    "github": "Search Syntax",
+    "gitlab": "Search Syntax"
+  }
+}

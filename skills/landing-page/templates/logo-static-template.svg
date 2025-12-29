@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Assistant Skills Logo Template (Static Version - No Animation)
+
+  Placeholders:
+    {{PRODUCT_NAME}}   - Short product name (e.g., jira, confluence, splunk)
+    {{PRIMARY_COLOR}}  - Main brand color (e.g., #0052CC)
+    {{ACCENT_COLOR}}   - Secondary color (e.g., #4a00e0)
+    {{CURSOR_COLOR}}   - Cursor glow color (e.g., #00C7E6)
+    {{BG_START}}       - Background gradient start (default: #1a1a2e)
+    {{BG_END}}         - Background gradient end (default: #16213e)
+    {{FONT_SIZE}}      - Text size based on name length (default: 80)
+    {{TEXT_X}}         - Text X position (default: 230)
+    {{CURSOR_X}}       - Cursor X position (varies by text length)
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:{{BG_START}};stop-opacity:1" />
+      <stop offset="100%" style="stop-color:{{BG_END}};stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="promptGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:{{PRIMARY_COLOR}};stop-opacity:1" />
+      <stop offset="100%" style="stop-color:{{ACCENT_COLOR}};stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="cursorGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:{{CURSOR_COLOR}};stop-opacity:1" />
+      <stop offset="100%" style="stop-color:{{PRIMARY_COLOR}};stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <circle cx="256" cy="256" r="240" fill="url(#bgGradient)" filter="url(#shadow)"/>
+  <circle cx="256" cy="256" r="240" fill="none" stroke="url(#promptGradient)" stroke-width="3" opacity="0.6"/>
+  <circle cx="256" cy="256" r="200" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.1"/>
+
+  <path
+    d="M 130 200 L 200 256 L 130 312"
+    fill="none"
+    stroke="url(#promptGradient)"
+    stroke-width="28"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+
+  <text
+    x="{{TEXT_X}}"
+    y="275"
+    font-family="'SF Mono', 'Monaco', 'Consolas', 'Courier New', monospace"
+    font-size="{{FONT_SIZE}}"
+    font-weight="600"
+    fill="#ffffff"
+    letter-spacing="-2"
+  >{{PRODUCT_NAME}}</text>
+
+  <rect
+    x="{{CURSOR_X}}"
+    y="275"
+    width="40"
+    height="8"
+    rx="2"
+    fill="url(#cursorGradient)"
+    filter="url(#glow)"
+  />
+
+  <g opacity="0.3">
+    <circle cx="120" cy="380" r="4" fill="{{CURSOR_COLOR}}"/>
+    <circle cx="140" cy="380" r="4" fill="{{ACCENT_COLOR}}"/>
+    <circle cx="160" cy="380" r="4" fill="{{PRIMARY_COLOR}}"/>
+  </g>
+</svg>
