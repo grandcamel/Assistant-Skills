@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  e2e-tests:
+    build:
+      context: ../..
+      dockerfile: docker/e2e/Dockerfile
+    environment:
+      # Primary authentication method
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+
+      # Alternative: Claude Code OAuth (if user has logged in)
+      # Mount ~/.claude for OAuth credentials
+
+      # Test configuration
+      - E2E_TEST_TIMEOUT=${E2E_TEST_TIMEOUT:-120}
+      - E2E_TEST_MODEL=${E2E_TEST_MODEL:-claude-sonnet-4-20250514}
+      - E2E_VERBOSE=${E2E_VERBOSE:-false}
+
+      # Claude Code settings
+      - CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
+      - CLAUDE_CODE_SKIP_OOBE=1
+      - CI=true
+    volumes:
+      # Mount test results
+      - ../../test-results/e2e:/workspace/test-results
+
+      # Optional: Mount Claude credentials for OAuth auth
+      - ${HOME}/.claude:/root/.claude:ro
+
+      # Optional: Mount custom config
+      - ${CLAUDE_CONFIG_DIR:-/dev/null}:/root/.config/claude-code:ro
+    working_dir: /workspace/plugin-source
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 512M
+
+  # Interactive shell for debugging
+  e2e-shell:
+    build:
+      context: ../..
+      dockerfile: docker/e2e/Dockerfile
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
+      - CLAUDE_CODE_SKIP_OOBE=1
+    volumes:
+      - ../..:/workspace/plugin-source
+      - ${HOME}/.claude:/root/.claude:ro
+    working_dir: /workspace/plugin-source
+    stdin_open: true
+    tty: true
+    entrypoint: /bin/bash
+    profiles:
+      - debug
