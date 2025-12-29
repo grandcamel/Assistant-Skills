@@ -168,14 +168,22 @@ else
 fi
 echo ""
 
-# Deep nesting check
+# Deep nesting check (excludes content inside code blocks)
 echo "=== Deep Nesting Check ==="
 if [ -d "$SKILL_PATH/docs" ]; then
-  NESTED=$(grep -l "\[.*\](.*\.md)" "$SKILL_PATH/docs/"*.md 2>/dev/null || true)
+  NESTED=""
+  for doc in "$SKILL_PATH/docs/"*.md; do
+    [ -f "$doc" ] || continue
+    # Use awk to exclude code blocks (handles ```language markers), then grep for markdown links
+    HAS_NESTED=$(awk 'BEGIN{c=0} /^```/{c=1-c;next} c==0{print}' "$doc" | grep -E "\[.*\]\(.*\.md\)" 2>/dev/null || true)
+    if [ -n "$HAS_NESTED" ]; then
+      NESTED="$NESTED $(basename "$doc")"
+    fi
+  done
   if [ -n "$NESTED" ]; then
     echo "[WARNING] Deep nesting detected in:"
-    echo "$NESTED" | while read f; do
-      echo "  - $(basename "$f")"
+    for f in $NESTED; do
+      echo "  - $f"
     done
   else
     echo "[GOOD] No deep nesting found"

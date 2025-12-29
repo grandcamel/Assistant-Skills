@@ -1,7 +1,7 @@
 {
   "name": "assistant-skills",
-  "version": "1.1.0",
-  "description": "Templates and tools for building Claude Code Assistant Skills projects. Includes project scaffolding, skill creation wizards, and optimization tools.",
+  "version": "1.2.0",
+  "description": "Templates and tools for building Claude Code Assistant Skills projects. Includes project scaffolding, skill creation wizards, optimization tools, library publishing, and E2E testing.",
   "author": {
     "name": "Jason Krueger",
     "url": "https://github.com/grandcamel"
@@ -14,7 +14,9 @@
     "templates",
     "skills-optimizer",
     "progressive-disclosure",
-    "token-efficiency"
+    "token-efficiency",
+    "e2e-testing",
+    "library-publisher"
   ],
   "skills": "./skills/",
   "hooks": "./hooks/hooks.json",

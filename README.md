@@ -11,7 +11,7 @@
 <sub>Faster skill<br>development</sub>
 </td>
 <td align="center">
-<h2>4</h2>
+<h2>5</h2>
 <sub>Production-ready<br>skills included</sub>
 </td>
 <td align="center">
@@ -28,7 +28,7 @@
 <p align="center">
   <a href="https://github.com/grandcamel/Assistant-Skills"><img src="https://img.shields.io/github/stars/grandcamel/Assistant-Skills?style=social" alt="GitHub Stars"></a>
   <a href="https://pypi.org/project/assistant-skills-lib/"><img src="https://img.shields.io/pypi/v/assistant-skills-lib?color=blue&logo=pypi&logoColor=white" alt="PyPI"></a>
-  <img src="https://img.shields.io/badge/tests-25%2B%20passing-brightgreen?logo=pytest" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-120%2B%20passing-brightgreen?logo=pytest" alt="Tests">
   <img src="https://img.shields.io/badge/python-3.8+-3776AB?logo=python&logoColor=white" alt="Python 3.8+">
   <img src="https://img.shields.io/badge/marketplace-Claude%20Code-6366F1" alt="Claude Code Marketplace">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License">
@@ -112,7 +112,7 @@ From Claude Code:
 /plugin grandcamel/Assistant-Skills
 ```
 
-This adds the marketplace and installs the `assistant-skills` plugin with all 4 skills.
+This adds the marketplace and installs the `assistant-skills` plugin with all 5 skills.
 
 **Prerequisites:** Install the shared library:
 ```bash
@@ -156,6 +156,7 @@ Claude scaffolds your project with:
 | **skills-optimizer** | Audit token efficiency | `"Analyze my skill for optimization"` |
 | **landing-page** | Generate branded READMEs | `"Create a landing page for this project"` |
 | **library-publisher** | Publish shared libs to PyPI | `"Publish my shared library as a PyPI package"` |
+| **e2e-testing** | Set up E2E test infrastructure | `"Add E2E tests to my plugin"` |
 
 ### assistant-builder
 
@@ -214,6 +215,24 @@ python skills/library-publisher/scripts/scaffold_package.py \
 python skills/library-publisher/scripts/migrate_imports.py \
   --project /path/to/project \
   --package myproject_lib
+```
+
+### e2e-testing
+
+Set up end-to-end testing infrastructure for Claude Code plugins.
+
+```bash
+# Initialize E2E testing infrastructure
+python skills/e2e-testing/scripts/setup_e2e.py /path/to/project
+
+# Auto-generate test cases from plugin structure
+python skills/e2e-testing/scripts/generate_test_cases.py /path/to/project
+
+# Run tests
+./scripts/run-e2e-tests.sh
+
+# Update documentation with E2E info
+python skills/e2e-testing/scripts/update_docs.py /path/to/project
 ```
 
 ---
@@ -312,6 +331,7 @@ flowchart TD
     AS --> SO["skills-optimizer<br/>Token Efficiency"]
     AS --> LP["landing-page<br/>README Branding"]
     AS --> LIB["library-publisher<br/>PyPI Publishing"]
+    AS --> E2E["e2e-testing<br/>E2E Test Infrastructure"]
 
     AB --> T["Templates"]
     AB --> SH["Shared Library"]
@@ -319,6 +339,7 @@ flowchart TD
     SO --> AN["Analyzers"]
     LP --> TM["Template Engine"]
     LIB --> PY["PyPI Package<br/>Generation"]
+    E2E --> DOC["Docker + pytest"]
 ```
 
 ### Progressive Disclosure Model
@@ -377,7 +398,8 @@ Assistant-Skills/
 │   ├── assistant-builder/    # Project scaffolding
 │   ├── skills-optimizer/     # Token optimization
 │   ├── landing-page/         # README branding
-│   └── library-publisher/    # PyPI publishing
+│   ├── library-publisher/    # PyPI publishing
+│   └── e2e-testing/          # E2E test infrastructure
 ├── docker/                   # Docker test infrastructure
 ├── 00-project-lifecycle/     # Templates
 ├── 01-project-scaffolding/

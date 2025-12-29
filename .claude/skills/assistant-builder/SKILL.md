@@ -1,7 +1,7 @@
 ---
-name: "assistant-builder"
-description: "Interactive wizard for creating new Assistant Skills projects or adding skills to existing ones"
-when_to_use: |
+name: assistant-builder
+description: Interactive wizard for creating new Assistant Skills projects or adding skills to existing ones. Use when user wants to "create a new project", "add a skill", "scaffold a plugin", "show templates", or "validate project structure".
+when_to_use:
   - Starting a new Assistant Skills project from scratch
   - Adding a new skill to an existing project
   - Looking for patterns from reference implementations (Jira, Confluence, Splunk)

@@ -1,7 +1,7 @@
 ---
-name: "skills-optimizer"
-description: "Audit and optimize skills for token efficiency and progressive disclosure compliance"
-when_to_use: |
+name: skills-optimizer
+description: Audit and optimize skills for token efficiency and progressive disclosure compliance. Use when user wants to "analyze skill tokens", "audit skills", "optimize skill size", "check token efficiency", or "validate progressive disclosure".
+when_to_use:
   - Analyzing skill token footprint
   - Reformatting verbose skills into hierarchical structures
   - Ensuring skills follow the 3-level disclosure model
