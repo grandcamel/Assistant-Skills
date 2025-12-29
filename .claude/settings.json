@@ -1,0 +1,17 @@
+{
+  "$schema": "./skills/shared/config/config.schema.json",
+  "assistant-builder": {
+    "template_dir": "../",
+    "reference_projects": {
+      "jira": "~/IdeaProjects/Jira-Assistant-Skills",
+      "confluence": "~/IdeaProjects/Confluence-Assistant-Skills",
+      "splunk": "~/IdeaProjects/Splunk-Assistant-Skills"
+    },
+    "defaults": {
+      "auth_method": "api_key",
+      "pagination_style": "offset",
+      "python_version": "3.8",
+      "create_router": true
+    }
+  }
+}
