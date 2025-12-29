@@ -1,6 +1,6 @@
 {
   "name": "assistant-skills",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Templates and tools for building Claude Code Assistant Skills projects. Includes project scaffolding, skill creation wizards, and optimization tools.",
   "author": {
     "name": "Jason Krueger",
@@ -16,5 +16,11 @@
     "progressive-disclosure",
     "token-efficiency"
   ],
-  "skills": "./skills/"
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json",
+  "dependencies": {
+    "python": {
+      "assistant-skills-lib": ">=0.1.0"
+    }
+  }
 }

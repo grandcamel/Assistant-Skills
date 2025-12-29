@@ -1,0 +1,9 @@
+{
+  "hooks": [
+    {
+      "event": "SessionStart",
+      "type": "prompt",
+      "prompt": "Check if assistant-skills-lib is installed by running: python -c 'import assistant_skills_lib; print(assistant_skills_lib.__version__)'. If it fails with ImportError, inform the user they need to run: pip install assistant-skills-lib"
+    }
+  ]
+}
