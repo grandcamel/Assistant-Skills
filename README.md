@@ -305,9 +305,9 @@ Templates derived from production implementations:
 
 | Project | Skills | Tests | Status |
 |---------|--------|-------|--------|
-| Jira-Assistant-Skills | 14 | 560+ | Production |
-| Confluence-Assistant-Skills | 14 | 200+ | Production |
-| Splunk-Assistant-Skills | 13 | 150+ | Production |
+| [Jira-Assistant-Skills](https://github.com/grandcamel/Jira-Assistant-Skills) | 14 | 560+ | Production |
+| [Confluence-Assistant-Skills](https://github.com/grandcamel/Confluence-Assistant-Skills) | 14 | 1,039 | Production |
+| [Splunk-Assistant-Skills](https://github.com/grandcamel/Splunk-Assistant-Skills) | 13 | 248+ | Production |
 
 ---
 
