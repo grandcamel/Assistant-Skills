@@ -1,164 +1,135 @@
-# Assistant Skills Templates
+# Assistant Skills
 
-A comprehensive collection of prompt templates for building Claude Code Assistant Skills projects with Test-Driven Development (TDD) practices.
+A Claude Code plugin with templates and tools for building Assistant Skills projects.
 
-## Overview
+## Installation
 
-These templates guide you through the complete lifecycle of creating an Assistant Skills project for any REST API, from initial research through production-ready implementation.
-
-**Key Techniques:**
-- **TDD (Test-Driven Development)** - Write failing tests first, implement to pass
-- **Progressive Disclosure** - 3-level SKILL.md structure minimizes context token usage
-- **GAP Analysis** - Comprehensive API research before implementation
-- **Phased Implementation** - Milestone-based plans with regression checkpoints
-- **Router Meta-Skill** - Central hub pattern for skill routing
-
-## Quick Start
+### As Claude Code Plugin
 
 ```bash
-# 1. Copy templates to your project location
-cp -r Assistant-Skills-Templates/ ~/projects/my-api-skills-templates/
+# Clone the repository
+git clone https://github.com/jasonkrueger/Assistant-Skills.git
 
-# 2. Start with API research
-# Open 00-project-lifecycle/01-api-research-prompt.md
-# Use with Claude Code to research your target API
-
-# 3. Create GAP analysis
-# Use 00-project-lifecycle/02-gap-analysis-template.md
-
-# 4. Initialize project
-# Use 01-project-scaffolding/project-init-prompt.md
+# Install as plugin (from Claude Code)
+/install-plugin /path/to/Assistant-Skills
 ```
 
-## Template Categories
-
-| Folder | Purpose | When to Use |
-|--------|---------|-------------|
-| `00-project-lifecycle/` | Full lifecycle guidance | Starting a new project from scratch |
-| `01-project-scaffolding/` | Initial project setup | Creating directory structure, configs |
-| `02-shared-library/` | Common utilities | Building reusable client, error handling |
-| `03-skill-templates/` | Individual skills | Adding new skills to existing project |
-| `04-testing/` | TDD and testing | Writing unit and integration tests |
-| `05-documentation/` | Documentation patterns | Creating user and developer docs |
-| `06-git-and-ci/` | Version control, CI/CD | Setting up commits, GitHub Actions |
-| `examples/` | Filled-in examples | Reference for template completion |
-
-## Project Lifecycle
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        PROJECT LIFECYCLE                             │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                      │
-│  1. API RESEARCH          2. GAP ANALYSIS         3. ARCHITECTURE   │
-│  ┌──────────────┐         ┌──────────────┐        ┌──────────────┐  │
-│  │ Discover     │         │ Inventory    │        │ Design       │  │
-│  │ endpoints,   │────────▶│ capabilities │───────▶│ skills,      │  │
-│  │ auth, limits │         │ vs. needs    │        │ shared lib   │  │
-│  └──────────────┘         └──────────────┘        └──────────────┘  │
-│                                                          │           │
-│  ┌───────────────────────────────────────────────────────┘           │
-│  ▼                                                                   │
-│  4. IMPLEMENTATION PLAN   5. TDD CYCLE            6. COMPLETION     │
-│  ┌──────────────┐         ┌──────────────┐        ┌──────────────┐  │
-│  │ Phases,      │         │ Failing test │        │ Full test    │  │
-│  │ milestones,  │────────▶│ ──▶ Implement│───────▶│ suite, docs, │  │
-│  │ test targets │         │ ──▶ Pass     │        │ release      │  │
-│  └──────────────┘         └──────────────┘        └──────────────┘  │
-│                                                                      │
-└─────────────────────────────────────────────────────────────────────┘
+Or install directly from GitHub:
+```bash
+/install-plugin https://github.com/jasonkrueger/Assistant-Skills
 ```
 
-## Template Usage
+### Manual Installation
 
-Each template follows a consistent format:
-
-```markdown
-# Template Name
-
-## Purpose
-What this template accomplishes.
-
-## Prerequisites
-What you need before using this template.
-
-## Placeholders
-- `{{PLACEHOLDER}}` - Description of what to fill in
-
-## Prompt
-The actual prompt to use with Claude Code.
-
-## Expected Outputs
-What files/artifacts this creates.
-
-## Next Steps
-What template to use after this one.
+Copy the skills to your user skills directory:
+```bash
+cp -r skills/* ~/.claude/skills/
 ```
 
-## Progressive Disclosure (3 Levels)
+---
 
-SKILL.md files use 3 levels to minimize boot context:
+## Included Skills
 
-| Level | Content | Token Impact |
-|-------|---------|--------------|
-| **L1: Discovery** | YAML frontmatter (name, description, triggers) | ~50 tokens |
-| **L2: Quick Reference** | Tables, examples, common patterns | ~200-500 tokens |
-| **L3: Deep Documentation** | Linked files (workflows, subsystems, API details) | Loaded on demand |
+| Skill | Description |
+|-------|-------------|
+| `assistant-builder` | Interactive wizard for creating new Assistant Skills projects |
+| `skills-optimizer` | Audit and optimize skills for token efficiency |
 
-## TDD Commit Workflow
+### assistant-builder
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     TDD TWO-COMMIT PATTERN                       │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  COMMIT 1: Add failing tests                                     │
-│  ────────────────────────────────────────────────────────────   │
-│  test(skill-name): add failing tests for feature_name           │
-│                                                                  │
-│  - Tests define expected behavior                                │
-│  - All tests should FAIL at this point                          │
-│  - Commit captures test specification                            │
-│                                                                  │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  COMMIT 2: Implement to pass tests                               │
-│  ────────────────────────────────────────────────────────────   │
-│  feat(skill-name): implement feature_name (N/N tests passing)   │
-│                                                                  │
-│  - Implement minimum code to pass tests                          │
-│  - Include test count in commit message                          │
-│  - Run regression suite before committing                        │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
+Create and extend Claude Code Assistant Skills projects using proven templates.
+
+```bash
+# Create new project
+python skills/assistant-builder/scripts/scaffold_project.py
+
+# Add skill to existing project
+python skills/assistant-builder/scripts/add_skill.py --name "search"
+
+# Or use the interactive wizard
+/assistant-builder-setup
 ```
 
-## Best Practices
+### skills-optimizer
 
-### Do
-- Complete GAP analysis before writing code
-- Write failing tests before implementation
-- Run full test suite before each phase transition
-- Update implementation plan after each milestone
-- Use conventional commits with test counts
+Audit skills for token efficiency and progressive disclosure compliance.
 
-### Don't
-- Skip API research phase
-- Implement without tests
-- Batch multiple features in one commit
-- Forget regression testing between phases
-- Leave implementation plan outdated
+```bash
+# Analyze a skill
+./skills/skills-optimizer/scripts/analyze-skill.sh ~/.claude/skills/my-skill
+
+# Audit all skills
+./skills/skills-optimizer/scripts/audit-all-skills.sh ~/.claude/skills
+```
+
+---
+
+## Templates
+
+This project includes comprehensive templates for building Assistant Skills:
+
+| Folder | Purpose |
+|--------|---------|
+| `00-project-lifecycle/` | API research, GAP analysis, architecture |
+| `01-project-scaffolding/` | Project initialization, configs |
+| `02-shared-library/` | HTTP client, error handling templates |
+| `03-skill-templates/` | SKILL.md, script templates |
+| `04-testing/` | TDD workflow, test templates |
+| `05-documentation/` | Workflow, reference docs |
+| `06-git-and-ci/` | Commits, GitHub Actions |
+
+---
+
+## Progressive Disclosure Model
+
+Skills use 3 levels to minimize token usage:
+
+| Level | Target | Loaded When |
+|-------|--------|-------------|
+| L1: Metadata | ~200 chars | Startup (all skills) |
+| L2: SKILL.md | <500 lines | Skill triggered |
+| L3: Nested docs | Variable | Explicitly accessed |
+
+---
 
 ## Reference Projects
 
-These templates are derived from production implementations:
+Templates derived from production implementations:
 
-| Project | Skills | Scripts | Tests |
-|---------|--------|---------|-------|
-| Jira-Assistant-Skills | 14 | 100+ | 560+ |
-| Confluence-Assistant-Skills | 14 | 60+ | 200+ |
-| Splunk-Assistant-Skills | 13 | 50+ | 150+ |
+| Project | Skills | Tests |
+|---------|--------|-------|
+| Jira-Assistant-Skills | 14 | 560+ |
+| Confluence-Assistant-Skills | 14 | 200+ |
+| Splunk-Assistant-Skills | 13 | 150+ |
+
+---
+
+## Development
+
+### Run Tests
+
+```bash
+PYTHONPATH="skills/shared/scripts/lib" pytest skills/assistant-builder/tests/ -v
+```
+
+### Project Structure
+
+```
+Assistant-Skills/
+├── .claude-plugin/
+│   └── plugin.json          # Plugin manifest
+├── skills/
+│   ├── assistant-builder/   # Project scaffolding skill
+│   ├── skills-optimizer/    # Optimization skill
+│   └── shared/              # Shared library
+├── 00-project-lifecycle/    # Templates
+├── 01-project-scaffolding/
+├── ...
+└── README.md
+```
+
+---
 
 ## License
 
-MIT License - Use freely for your own Assistant Skills projects.
+MIT License

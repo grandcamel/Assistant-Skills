@@ -1,0 +1,20 @@
+{
+  "name": "assistant-skills",
+  "version": "1.0.0",
+  "description": "Templates and tools for building Claude Code Assistant Skills projects. Includes project scaffolding, skill creation wizards, and optimization tools.",
+  "author": {
+    "name": "jasonkrueger",
+    "url": "https://github.com/jasonkrueger"
+  },
+  "repository": "https://github.com/jasonkrueger/Assistant-Skills",
+  "license": "MIT",
+  "keywords": [
+    "assistant-skills",
+    "scaffolding",
+    "templates",
+    "skills-optimizer",
+    "progressive-disclosure",
+    "token-efficiency"
+  ],
+  "skills": "./skills/"
+}
