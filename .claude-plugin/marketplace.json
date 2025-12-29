@@ -19,6 +19,19 @@
       "category": "development",
       "homepage": "https://github.com/grandcamel/Assistant-Skills",
       "keywords": ["skills", "scaffolding", "templates", "optimization"]
+    },
+    {
+      "name": "splunk-assistant-skills",
+      "description": "14 specialized skills for Splunk REST API automation. Natural language search, job management, exports, alerts, and administration. 62 production-ready scripts with 248 tests.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Jason Krueger",
+        "url": "https://github.com/grandcamel"
+      },
+      "source": "grandcamel/Splunk-Assistant-Skills",
+      "category": "observability",
+      "homepage": "https://github.com/grandcamel/Splunk-Assistant-Skills",
+      "keywords": ["splunk", "spl", "search", "observability", "logs", "metrics", "alerts", "security"]
     }
   ]
 }
