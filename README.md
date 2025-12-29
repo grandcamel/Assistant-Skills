@@ -11,7 +11,7 @@
 <sub>Faster skill<br>development</sub>
 </td>
 <td align="center">
-<h2>3</h2>
+<h2>4</h2>
 <sub>Production-ready<br>skills included</sub>
 </td>
 <td align="center">
@@ -112,7 +112,12 @@ From Claude Code:
 /plugin grandcamel/Assistant-Skills
 ```
 
-This adds the marketplace and installs the `assistant-skills` plugin with all 3 skills.
+This adds the marketplace and installs the `assistant-skills` plugin with all 4 skills.
+
+**Prerequisites:** Install the shared library:
+```bash
+pip install assistant-skills-lib
+```
 
 **Alternative: Clone locally**
 ```bash
@@ -150,6 +155,7 @@ Claude scaffolds your project with:
 | **assistant-builder** | Create & extend projects | `"Add a search skill to my project"` |
 | **skills-optimizer** | Audit token efficiency | `"Analyze my skill for optimization"` |
 | **landing-page** | Generate branded READMEs | `"Create a landing page for this project"` |
+| **library-publisher** | Publish shared libs to PyPI | `"Publish my shared library as a PyPI package"` |
 
 ### assistant-builder
 
@@ -188,6 +194,26 @@ python skills/landing-page/scripts/analyze_project.py /path/to/project
 
 # Generate logo SVG
 python skills/landing-page/scripts/generate_logo.py --name jira --primary "#0052CC"
+```
+
+### library-publisher
+
+Extract shared libraries and publish them as PyPI packages with automated CI/CD.
+
+```bash
+# Analyze existing shared library
+python skills/library-publisher/scripts/analyze_library.py /path/to/project
+
+# Scaffold PyPI package
+python skills/library-publisher/scripts/scaffold_package.py \
+  --name "myproject-lib" \
+  --source /path/to/lib \
+  --output ~/myproject-lib
+
+# Migrate project to use new package
+python skills/library-publisher/scripts/migrate_imports.py \
+  --project /path/to/project \
+  --package myproject_lib
 ```
 
 ---
@@ -285,12 +311,14 @@ flowchart TD
     AS --> AB["assistant-builder<br/>Project Scaffolding"]
     AS --> SO["skills-optimizer<br/>Token Efficiency"]
     AS --> LP["landing-page<br/>README Branding"]
+    AS --> LIB["library-publisher<br/>PyPI Publishing"]
 
     AB --> T["Templates"]
     AB --> SH["Shared Library"]
 
     SO --> AN["Analyzers"]
     LP --> TM["Template Engine"]
+    LIB --> PY["PyPI Package<br/>Generation"]
 ```
 
 ### Progressive Disclosure Model
@@ -326,6 +354,18 @@ pip install -r requirements.txt
 pytest skills/assistant-builder/tests/ -v
 ```
 
+### Run E2E Tests
+
+E2E tests validate the plugin by interacting with the actual Claude Code CLI:
+
+```bash
+# Requires ANTHROPIC_API_KEY
+./scripts/run-e2e-tests.sh           # Run in Docker
+./scripts/run-e2e-tests.sh --local   # Run locally
+```
+
+See [tests/e2e/README.md](tests/e2e/README.md) for details.
+
 ### Project Structure
 
 ```
@@ -336,7 +376,8 @@ Assistant-Skills/
 ├── skills/
 │   ├── assistant-builder/    # Project scaffolding
 │   ├── skills-optimizer/     # Token optimization
-│   └── landing-page/         # README branding
+│   ├── landing-page/         # README branding
+│   └── library-publisher/    # PyPI publishing
 ├── docker/                   # Docker test infrastructure
 ├── 00-project-lifecycle/     # Templates
 ├── 01-project-scaffolding/
