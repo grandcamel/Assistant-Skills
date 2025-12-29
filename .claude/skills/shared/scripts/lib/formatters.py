@@ -257,3 +257,108 @@ def format_count(count: int, singular: str, plural: Optional[str] = None) -> str
 
     word = singular if count == 1 else plural
     return f"{count} {word}"
+
+
+def format_timestamp(
+    timestamp: Optional[str],
+    format_str: str = "%Y-%m-%d %H:%M",
+    default: str = "N/A"
+) -> str:
+    """
+    Format an ISO timestamp for display.
+
+    Args:
+        timestamp: ISO format timestamp string
+        format_str: Output format string
+        default: Value to return if timestamp is None/invalid
+
+    Returns:
+        Formatted date/time string
+    """
+    from datetime import datetime
+
+    if not timestamp:
+        return default
+
+    try:
+        # Handle various ISO formats
+        if 'T' in timestamp:
+            # Remove timezone info for simple parsing
+            clean = timestamp.split('+')[0].split('Z')[0]
+            dt = datetime.fromisoformat(clean)
+        else:
+            dt = datetime.fromisoformat(timestamp)
+
+        return dt.strftime(format_str)
+    except (ValueError, TypeError):
+        return timestamp[:16] if len(timestamp) > 16 else timestamp
+
+
+def truncate(text: str, max_length: int = 100, suffix: str = "...") -> str:
+    """
+    Truncate text to a maximum length.
+
+    Args:
+        text: Text to truncate
+        max_length: Maximum length including suffix
+        suffix: Suffix to add when truncated
+
+    Returns:
+        Truncated text
+    """
+    if not text:
+        return ""
+    if len(text) <= max_length:
+        return text
+    return text[:max_length - len(suffix)] + suffix
+
+
+def format_duration(seconds: float) -> str:
+    """
+    Format duration in human-readable format.
+
+    Args:
+        seconds: Duration in seconds
+
+    Returns:
+        Formatted duration string like "2m 30s" or "1h 15m"
+    """
+    if seconds < 60:
+        return f"{seconds:.1f}s"
+    elif seconds < 3600:
+        minutes = int(seconds // 60)
+        secs = int(seconds % 60)
+        return f"{minutes}m {secs}s"
+    else:
+        hours = int(seconds // 3600)
+        minutes = int((seconds % 3600) // 60)
+        return f"{hours}h {minutes}m"
+
+
+def format_percentage(value: float, decimal_places: int = 1) -> str:
+    """
+    Format a decimal as a percentage.
+
+    Args:
+        value: Decimal value (0.0 - 1.0)
+        decimal_places: Number of decimal places
+
+    Returns:
+        Formatted percentage string like "75.5%"
+    """
+    return f"{value * 100:.{decimal_places}f}%"
+
+
+def indent_text(text: str, spaces: int = 2) -> str:
+    """
+    Indent all lines of text.
+
+    Args:
+        text: Text to indent
+        spaces: Number of spaces to indent
+
+    Returns:
+        Indented text
+    """
+    indent = ' ' * spaces
+    return '\n'.join(indent + line for line in text.split('\n'))

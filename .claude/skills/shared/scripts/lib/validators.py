@@ -323,3 +323,179 @@ def validate_list(
         )
 
     return items
+
+
+def validate_limit(
+    limit: Union[str, int],
+    field_name: str = "limit",
+    min_value: int = 1,
+    max_value: int = 250,
+    default: int = 25,
+) -> int:
+    """
+    Validate a pagination limit.
+
+    Args:
+        limit: The limit value to validate
+        field_name: Name of the field for error messages
+        min_value: Minimum allowed value
+        max_value: Maximum allowed value
+        default: Default value if limit is None
+
+    Returns:
+        Validated limit as integer
+
+    Raises:
+        ValidationError: If the limit is invalid
+    """
+    if limit is None:
+        return default
+
+    try:
+        limit_int = int(limit)
+    except (TypeError, ValueError):
+        raise ValidationError(
+            f"{field_name} must be an integer",
+            field=field_name
+        )
+
+    if limit_int < min_value:
+        raise ValidationError(
+            f"{field_name} must be at least {min_value}",
+            field=field_name
+        )
+
+    if limit_int > max_value:
+        raise ValidationError(
+            f"{field_name} must be at most {max_value}",
+            field=field_name
+        )
+
+    return limit_int
+
+
+def validate_email(
+    email: str,
+    field_name: str = "email",
+) -> str:
+    """
+    Validate an email address.
+
+    Args:
+        email: The email address to validate
+        field_name: Name of the field for error messages
+
+    Returns:
+        Validated email (lowercase)
+
+    Raises:
+        ValidationError: If the email is invalid
+    """
+    email = validate_required(email, field_name)
+    email = email.lower()
+
+    # Basic email pattern
+    email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    if not re.match(email_pattern, email):
+        raise ValidationError(
+            f"{field_name} is not a valid email address",
+            field=field_name,
+            suggestion="Format: user@example.com"
+        )
+
+    return email
+
+
+def validate_file_path(
+    file_path: Union[str, Path],
+    field_name: str = "file_path",
+    must_exist: bool = True,
+    must_be_file: bool = True,
+    allowed_extensions: Optional[List[str]] = None,
+) -> Path:
+    """
+    Validate a file path with extension checking.
+
+    Args:
+        file_path: The file path to validate
+        field_name: Name of the field for error messages
+        must_exist: If True, the file must exist
+        must_be_file: If True, the path must be a file (not directory)
+        allowed_extensions: List of allowed extensions (e.g., ['.txt', '.pdf'])
+
+    Returns:
+        Validated Path object
+
+    Raises:
+        ValidationError: If the file path is invalid
+    """
+    if file_path is None:
+        raise ValidationError(f"{field_name} is required", field=field_name)
+
+    path = Path(file_path).expanduser().resolve()
+
+    if must_exist and not path.exists():
+        raise ValidationError(
+            f"{field_name} does not exist: {path}",
+            field=field_name
+        )
+
+    if must_exist and must_be_file and not path.is_file():
+        raise ValidationError(
+            f"{field_name} is not a file: {path}",
+            field=field_name
+        )
+
+    if allowed_extensions:
+        ext = path.suffix.lower()
+        if ext not in [e.lower() for e in allowed_extensions]:
+            raise ValidationError(
+                f"{field_name} must have extension: {', '.join(allowed_extensions)} (got: {ext})",
+                field=field_name
+            )
+
+    return path
+
+
+def validate_integer(
+    value: Union[str, int],
+    field_name: str = "value",
+    min_value: Optional[int] = None,
+    max_value: Optional[int] = None,
+) -> int:
+    """
+    Validate and convert a value to an integer.
+
+    Args:
+        value: Value to validate
+        field_name: Name of the field for error messages
+        min_value: Minimum allowed value (optional)
+        max_value: Maximum allowed value (optional)
+
+    Returns:
+        Validated integer
+
+    Raises:
+        ValidationError: If the value is invalid
+    """
+    try:
+        int_value = int(value)
+    except (TypeError, ValueError):
+        raise ValidationError(
+            f"{field_name} must be an integer",
+            field=field_name
+        )
+
+    if min_value is not None and int_value < min_value:
+        raise ValidationError(
+            f"{field_name} must be at least {min_value}",
+            field=field_name
+        )
+
+    if max_value is not None and int_value > max_value:
+        raise ValidationError(
+            f"{field_name} must be at most {max_value}",
+            field=field_name
+        )
+
+    return int_value
