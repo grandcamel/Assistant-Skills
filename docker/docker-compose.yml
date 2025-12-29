@@ -1,0 +1,203 @@
+# Docker Compose for Assistant Skills Testing
+# Usage:
+#   docker-compose -f docker/docker-compose.yml up unit-tests
+#   docker-compose -f docker/docker-compose.yml up live-tests
+#   docker-compose -f docker/docker-compose.yml up all-tests
+
+version: "3.8"
+
+services:
+  # Base test service configuration
+  test-base:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        PYTHON_VERSION: "3.11"
+    volumes:
+      - ../test-results:/app/test-results
+      - ../.env:/app/.env:ro
+    working_dir: /app
+    environment:
+      - PYTEST_ADDOPTS=--color=yes
+    profiles:
+      - base
+
+  # Unit tests - fast, no external dependencies
+  unit-tests:
+    extends:
+      service: test-base
+    profiles:
+      - unit
+      - all
+    command: >
+      pytest 
+        skills/assistant-builder/tests/
+        .claude/skills/assistant-builder/tests/
+        -v 
+        --tb=short 
+        --durations=10
+        --junitxml=/app/test-results/unit-tests.xml
+        --cov=skills
+        --cov-report=xml:/app/test-results/coverage.xml
+        --cov-report=term-missing
+        -x
+
+  # Unit tests with parallel execution
+  unit-tests-parallel:
+    extends:
+      service: test-base
+    profiles:
+      - parallel
+    command: >
+      pytest 
+        skills/assistant-builder/tests/
+        -v 
+        --tb=short 
+        -n auto
+        --junitxml=/app/test-results/unit-tests-parallel.xml
+
+  # Live integration tests - requires API credentials
+  live-tests:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        PYTHON_VERSION: "3.11"
+    volumes:
+      - ../test-results:/app/test-results
+      - ../.env:/app/.env:ro
+    working_dir: /app
+    env_file:
+      - ../.env
+    environment:
+      - PYTEST_ADDOPTS=--color=yes
+      - LIVE_TEST_ENABLED=true
+    profiles:
+      - live
+    command: >
+      pytest
+        skills/assistant-builder/tests/live_integration/
+        -v
+        --tb=long
+        --timeout=120
+        -m "live or integration"
+        --junitxml=/app/test-results/live-tests.xml
+        --cov=skills
+        --cov-report=term-missing
+
+  # All live tests with verbose output
+  live-tests-verbose:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        PYTHON_VERSION: "3.11"
+    volumes:
+      - ../test-results:/app/test-results
+      - ../.env:/app/.env:ro
+    working_dir: /app
+    env_file:
+      - ../.env
+    environment:
+      - PYTEST_ADDOPTS=--color=yes
+      - LIVE_TEST_ENABLED=true
+    profiles:
+      - live-verbose
+    command: >
+      pytest
+        skills/assistant-builder/tests/live_integration/
+        -vvv
+        --tb=long
+        --timeout=120
+        -m "live or integration"
+        --junitxml=/app/test-results/live-tests-verbose.xml
+        -s
+
+  # All tests combined
+  all-tests:
+    extends:
+      service: test-base
+    profiles:
+      - complete
+    command: >
+      pytest 
+        skills/
+        .claude/skills/
+        -v 
+        --tb=short
+        --durations=20
+        --junitxml=/app/test-results/all-tests.xml
+        --cov=skills
+        --cov-report=xml:/app/test-results/coverage.xml
+        --cov-report=html:/app/test-results/htmlcov
+        --ignore=skills/shared
+
+  # Quick smoke tests
+  smoke-tests:
+    extends:
+      service: test-base
+    profiles:
+      - smoke
+    command: >
+      pytest 
+        skills/assistant-builder/tests/test_validate_project.py
+        -v 
+        --tb=line
+        -x
+
+  # Multi-Python version testing
+  test-py38:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        PYTHON_VERSION: "3.8"
+    extends:
+      service: test-base
+    profiles:
+      - matrix
+
+  test-py39:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        PYTHON_VERSION: "3.9"
+    extends:
+      service: test-base
+    profiles:
+      - matrix
+
+  test-py310:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        PYTHON_VERSION: "3.10"
+    extends:
+      service: test-base
+    profiles:
+      - matrix
+
+  test-py311:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        PYTHON_VERSION: "3.11"
+    extends:
+      service: test-base
+    profiles:
+      - matrix
+
+  test-py312:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        PYTHON_VERSION: "3.12"
+    extends:
+      service: test-base
+    profiles:
+      - matrix

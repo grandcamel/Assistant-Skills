@@ -6,9 +6,8 @@ import pytest
 import sys
 from pathlib import Path
 
-# Add scripts to path
+# Add scripts to path for importing script modules
 sys.path.insert(0, str(Path(__file__).parent.parent / 'scripts'))
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'shared' / 'scripts' / 'lib'))
 
 
 class TestValidateProject:

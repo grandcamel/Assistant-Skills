@@ -8,14 +8,19 @@ This is a Claude Code plugin marketplace providing templates, wizards, and tools
 
 ## Commands
 
+### Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
 ### Run Tests
 ```bash
-PYTHONPATH=".claude/skills/shared/scripts/lib" pytest .claude/skills/assistant-builder/tests/ -v
+pytest skills/assistant-builder/tests/ -v
 ```
 
 ### Run Single Test
 ```bash
-PYTHONPATH=".claude/skills/shared/scripts/lib" pytest .claude/skills/assistant-builder/tests/test_validate_project.py::test_validates_existing_project -v
+pytest skills/assistant-builder/tests/test_validate_project.py::test_validates_existing_project -v
 ```
 
 ### Analyze Skill Token Efficiency
@@ -26,6 +31,36 @@ PYTHONPATH=".claude/skills/shared/scripts/lib" pytest .claude/skills/assistant-b
 ### Validate Skill Structure
 ```bash
 ./skills/skills-optimizer/scripts/validate-skill.sh /path/to/skill
+```
+
+### Run Tests in Docker
+```bash
+# Unit tests
+./scripts/run-tests-docker.sh
+
+# Unit tests with coverage
+./scripts/run-tests-docker.sh --coverage
+
+# Live integration tests
+./scripts/run-live-tests-docker.sh
+
+# All tests
+./scripts/test.sh all
+
+# Test across Python versions (3.8-3.12)
+./scripts/test.sh matrix
+```
+
+### Docker Compose
+```bash
+# Run unit tests
+docker-compose -f docker/docker-compose.yml run --rm unit-tests
+
+# Run with parallel execution
+docker-compose -f docker/docker-compose.yml run --rm unit-tests-parallel
+
+# Run live integration tests (requires .env)
+docker-compose -f docker/docker-compose.yml run --rm live-tests
 ```
 
 ## Architecture
@@ -40,15 +75,28 @@ When modifying a skill, update both locations.
 
 ### Shared Library
 
-All Python scripts import from `skills/shared/scripts/lib/`:
-- `formatters.py` - Output formatting (tables, trees, colors)
-- `validators.py` - Input validation (emails, URLs, pagination)
-- `cache.py` - Response caching with TTL
-- `error_handler.py` - Exception hierarchy and `@handle_errors` decorator
-- `template_engine.py` - Template loading and placeholder replacement
-- `project_detector.py` - Find existing Assistant Skills projects
+All Python scripts use the `assistant-skills-lib` package from PyPI:
 
-Scripts require `PYTHONPATH` to be set for imports to work.
+```bash
+pip install assistant-skills-lib
+```
+
+```python
+from assistant_skills_lib import (
+    format_table, validate_url, Cache, handle_errors,
+    load_template, detect_project
+)
+```
+
+The package provides:
+- `formatters` - Output formatting (tables, trees, colors)
+- `validators` - Input validation (names, URLs, paths)
+- `cache` - Response caching with TTL
+- `error_handler` - Exception hierarchy and `@handle_errors` decorator
+- `template_engine` - Template loading and placeholder replacement
+- `project_detector` - Find existing Assistant Skills projects
+
+Package source: https://github.com/grandcamel/assistant-skills-lib
 
 ### Plugin Manifest Files
 

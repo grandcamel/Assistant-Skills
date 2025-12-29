@@ -27,15 +27,12 @@ import argparse
 import sys
 from pathlib import Path
 
-# Add shared lib to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'shared' / 'scripts' / 'lib'))
-
-from project_detector import detect_project, get_topic_prefix
-from validators import (
-    validate_required, validate_name, validate_path,
-    validate_list, ValidationError
+from assistant_skills_lib import (
+    detect_project, get_topic_prefix,
+    validate_required, validate_name, validate_path, validate_list,
+    InputValidationError as ValidationError,
+    print_success, print_error, print_info, print_warning
 )
-from formatters import print_success, print_error, print_info, print_warning
 
 
 # Script presets

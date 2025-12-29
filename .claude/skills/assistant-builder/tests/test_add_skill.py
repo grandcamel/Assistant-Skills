@@ -6,9 +6,8 @@ import pytest
 import sys
 from pathlib import Path
 
-# Add scripts to path
+# Add scripts to path for importing script modules
 sys.path.insert(0, str(Path(__file__).parent.parent / 'scripts'))
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'shared' / 'scripts' / 'lib'))
 
 
 class TestAddSkill:
@@ -129,7 +128,7 @@ class TestProjectDetection:
 
     def test_detects_project(self, sample_project):
         """Test that existing project is detected."""
-        from project_detector import detect_project
+        from assistant_skills_lib import detect_project
 
         project = detect_project(sample_project)
 
@@ -140,7 +139,7 @@ class TestProjectDetection:
 
     def test_detects_skills(self, sample_project):
         """Test that existing skills are detected."""
-        from project_detector import list_skills
+        from assistant_skills_lib import list_skills
 
         skills = list_skills(sample_project)
 

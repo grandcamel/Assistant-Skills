@@ -24,11 +24,8 @@ import json
 import sys
 from pathlib import Path
 
-# Add shared lib to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'shared' / 'scripts' / 'lib'))
-
-from project_detector import detect_project, validate_structure, list_skills, get_project_stats
-from formatters import (
+from assistant_skills_lib import (
+    detect_project, validate_structure, list_skills, get_project_stats,
     print_success, print_error, print_warning, print_info,
     print_header, format_json, format_table
 )

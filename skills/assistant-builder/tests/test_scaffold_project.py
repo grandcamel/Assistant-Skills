@@ -7,9 +7,8 @@ import sys
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-# Add scripts to path
+# Add scripts to path for importing script modules
 sys.path.insert(0, str(Path(__file__).parent.parent / 'scripts'))
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'shared' / 'scripts' / 'lib'))
 
 
 class TestScaffoldProject:
@@ -127,7 +126,7 @@ class TestValidation:
 
     def test_validates_project_name(self):
         """Test that invalid project names are rejected."""
-        from validators import validate_name, ValidationError
+        from assistant_skills_lib import validate_name, InputValidationError as ValidationError
 
         # Valid names
         assert validate_name("Test-Skills") == "Test-Skills"
@@ -142,7 +141,7 @@ class TestValidation:
 
     def test_validates_topic_prefix(self):
         """Test that invalid topic prefixes are rejected."""
-        from validators import validate_topic_prefix, ValidationError
+        from assistant_skills_lib import validate_topic_prefix, InputValidationError as ValidationError
 
         # Valid prefixes (note: uppercase gets normalized to lowercase)
         assert validate_topic_prefix("github") == "github"

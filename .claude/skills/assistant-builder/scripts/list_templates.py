@@ -26,11 +26,10 @@ import json
 import sys
 from pathlib import Path
 
-# Add shared lib to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'shared' / 'scripts' / 'lib'))
-
-from template_engine import list_template_files, get_template_dir
-from formatters import print_header, format_table, format_tree, format_json
+from assistant_skills_lib import (
+    list_template_files, get_template_dir,
+    print_header, format_table, format_tree, format_json
+)
 
 
 # Category descriptions

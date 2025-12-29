@@ -23,14 +23,11 @@ import re
 import sys
 from pathlib import Path
 
-# Add shared lib to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'shared' / 'scripts' / 'lib'))
-
-from template_engine import (
+from assistant_skills_lib import (
     load_template, list_placeholders, list_template_files,
-    PLACEHOLDER_DESCRIPTIONS
+    print_header, print_info, print_warning
 )
-from formatters import print_header, print_info, print_warning
+from assistant_skills_lib.template_engine import PLACEHOLDER_DESCRIPTIONS
 
 
 def find_template(name: str) -> str:

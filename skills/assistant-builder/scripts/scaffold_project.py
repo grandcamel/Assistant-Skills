@@ -33,15 +33,13 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-# Add shared lib to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'shared' / 'scripts' / 'lib'))
-
-from template_engine import load_template, render_template, get_template_dir
-from validators import (
+from assistant_skills_lib import (
+    load_template, render_template, get_template_dir,
     validate_required, validate_name, validate_topic_prefix,
-    validate_url, validate_choice, validate_list, validate_path, ValidationError
+    validate_url, validate_choice, validate_list, validate_path,
+    InputValidationError as ValidationError,
+    print_success, print_error, print_info, print_warning, format_tree
 )
-from formatters import print_success, print_error, print_info, print_warning, format_tree
 
 
 # Authentication methods
