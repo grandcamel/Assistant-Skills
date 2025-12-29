@@ -105,16 +105,14 @@ with search and issues skills"
 
 ### 1. Install from Marketplace
 
-From Claude Code, add the marketplace and install:
+From Claude Code, add the marketplace:
 ```
-/plugin https://github.com/grandcamel/Assistant-Skills
+/plugin grandcamel/Assistant-Skills
 ```
 
-Or install individual skills:
+Then install the plugin:
 ```
-/plugin https://github.com/grandcamel/Assistant-Skills assistant-builder
-/plugin https://github.com/grandcamel/Assistant-Skills skills-optimizer
-/plugin https://github.com/grandcamel/Assistant-Skills landing-page
+/plugin grandcamel/Assistant-Skills assistant-skills
 ```
 
 **Alternative: Local installation**

@@ -1,6 +1,6 @@
 {
-  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "assistant-skills-marketplace",
+  "version": "1.0.0",
   "description": "Templates and tools for building Claude Code Assistant Skills projects. Production-ready skills for project scaffolding, optimization, and branding.",
   "owner": {
     "name": "Jason Krueger",
@@ -18,46 +18,7 @@
       "source": "./",
       "category": "development",
       "homepage": "https://github.com/grandcamel/Assistant-Skills",
-      "tags": ["skills", "scaffolding", "templates", "optimization"]
-    },
-    {
-      "name": "assistant-builder",
-      "description": "Interactive wizard for creating new Assistant Skills projects or adding skills to existing ones. Includes templates for SKILL.md, scripts, tests, and documentation.",
-      "version": "1.0.0",
-      "author": {
-        "name": "Jason Krueger",
-        "url": "https://github.com/grandcamel"
-      },
-      "source": "./skills/assistant-builder",
-      "category": "development",
-      "homepage": "https://github.com/grandcamel/Assistant-Skills",
-      "tags": ["scaffolding", "wizard", "templates", "project-creation"]
-    },
-    {
-      "name": "skills-optimizer",
-      "description": "Audit and optimize skills for token efficiency and progressive disclosure compliance. Analyzes SKILL.md files and provides A-F grades with specific improvement recommendations.",
-      "version": "1.0.0",
-      "author": {
-        "name": "Jason Krueger",
-        "url": "https://github.com/grandcamel"
-      },
-      "source": "./skills/skills-optimizer",
-      "category": "development",
-      "homepage": "https://github.com/grandcamel/Assistant-Skills",
-      "tags": ["optimization", "token-efficiency", "analysis", "grading"]
-    },
-    {
-      "name": "landing-page",
-      "description": "Generate professional README landing pages for Assistant Skills projects with consistent branding. Creates hero sections, comparison tables, architecture diagrams, and SVG logos.",
-      "version": "1.0.0",
-      "author": {
-        "name": "Jason Krueger",
-        "url": "https://github.com/grandcamel"
-      },
-      "source": "./skills/landing-page",
-      "category": "documentation",
-      "homepage": "https://github.com/grandcamel/Assistant-Skills",
-      "tags": ["readme", "branding", "documentation", "logos"]
+      "keywords": ["skills", "scaffolding", "templates", "optimization"]
     }
   ]
 }
