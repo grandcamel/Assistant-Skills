@@ -282,6 +282,40 @@ class TestCustom:
         assert "expected" in result["output"].lower()
 ```
 
+## Response Logging
+
+All Claude responses are automatically logged for troubleshooting:
+
+| Location | Description |
+|----------|-------------|
+| `test-results/e2e/responses_latest.log` | Symlink to most recent log |
+| `test-results/e2e/responses_YYYYMMDD_HHMMSS.log` | Timestamped logs |
+
+### Log Contents
+
+Each prompt/response pair is logged with:
+- Timestamp
+- Test ID (if available)
+- Prompt text (truncated to 200 chars)
+- Full response output (stdout)
+- Stderr (if any)
+- Exit code and duration
+
+### Viewing Failed Test Responses
+
+When tests fail, responses are shown:
+1. **In pytest output** - Truncated response in assertion message
+2. **In test summary** - Full response output for each failure
+3. **In log file** - Complete untruncated responses
+
+```bash
+# View latest responses after test run
+cat test-results/e2e/responses_latest.log
+
+# Search for specific test
+grep -A 50 "test_my_feature" test-results/e2e/responses_latest.log
+```
+
 ## Troubleshooting
 
 ### No authentication configured
