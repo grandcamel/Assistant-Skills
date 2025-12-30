@@ -34,11 +34,17 @@ def e2e_enabled():
     """Check if E2E tests should run."""
     # E2E tests require API key or OAuth credentials
     api_key = os.environ.get("ANTHROPIC_API_KEY")
-    claude_dir = Path.home() / ".claude"
 
     if api_key:
         return True
 
+    # Check for OAuth credentials in ~/.claude.json (primary location)
+    oauth_file = Path.home() / ".claude.json"
+    if oauth_file.exists():
+        return True
+
+    # Also check legacy location ~/.claude/credentials.json
+    claude_dir = Path.home() / ".claude"
     if claude_dir.exists() and (claude_dir / "credentials.json").exists():
         return True
 

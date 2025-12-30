@@ -88,11 +88,13 @@ update_docs.py
 
 Tests require Claude API access. Supported methods:
 
-| Method | Setup |
-|--------|-------|
-| API Key | `export ANTHROPIC_API_KEY="sk-ant-..."` |
-| OAuth | `claude auth login` |
-| Config file | Mount `~/.claude/` directory |
+| Method | Location | Setup |
+|--------|----------|-------|
+| API Key | Environment | `export ANTHROPIC_API_KEY="sk-ant-..."` |
+| OAuth | `~/.claude.json` | `claude auth login` |
+| OAuth (legacy) | `~/.claude/credentials.json` | Older Claude Code versions |
+
+The test framework checks all locations automatically.
 
 ## Test Case Generation
 
@@ -284,8 +286,10 @@ class TestCustom:
 
 ### No authentication configured
 ```bash
+# Option 1: API Key
 export ANTHROPIC_API_KEY="sk-ant-..."
-# or
+
+# Option 2: OAuth (creates ~/.claude.json)
 claude auth login
 ```
 

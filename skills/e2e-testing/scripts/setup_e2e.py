@@ -196,12 +196,20 @@ def pytest_addoption(parser):
 def e2e_enabled():
     """Check if E2E tests should run."""
     api_key = os.environ.get("ANTHROPIC_API_KEY")
-    claude_dir = Path.home() / ".claude"
 
     if api_key:
         return True
+
+    # Check for OAuth credentials in ~/.claude.json (primary location)
+    oauth_file = Path.home() / ".claude.json"
+    if oauth_file.exists():
+        return True
+
+    # Also check legacy location ~/.claude/credentials.json
+    claude_dir = Path.home() / ".claude"
     if claude_dir.exists() and (claude_dir / "credentials.json").exists():
         return True
+
     return False
 
 
@@ -379,9 +387,17 @@ class ClaudeCodeRunner:
         """Check if authentication is configured."""
         if os.environ.get("ANTHROPIC_API_KEY"):
             return True
+
+        # Check for OAuth credentials in ~/.claude.json (primary location)
+        oauth_file = Path.home() / ".claude.json"
+        if oauth_file.exists():
+            return True
+
+        # Also check legacy location ~/.claude/credentials.json
         claude_dir = Path.home() / ".claude"
         if claude_dir.exists() and (claude_dir / "credentials.json").exists():
             return True
+
         return False
 
     def send_prompt(self, prompt: str, timeout: Optional[int] = None) -> Dict[str, Any]:
@@ -812,8 +828,10 @@ done
 # Check auth
 if [[ -n "$ANTHROPIC_API_KEY" ]]; then
     echo -e "${{GREEN}}✓ API key configured${{NC}}"
+elif [[ -f "$HOME/.claude.json" ]]; then
+    echo -e "${{GREEN}}✓ OAuth configured (~/.claude.json)${{NC}}"
 elif [[ -f "$HOME/.claude/credentials.json" ]]; then
-    echo -e "${{GREEN}}✓ OAuth configured${{NC}}"
+    echo -e "${{GREEN}}✓ OAuth configured (~/.claude/credentials.json)${{NC}}"
 else
     echo -e "${{RED}}✗ No authentication${{NC}}"
     echo "Set ANTHROPIC_API_KEY or run: claude auth login"

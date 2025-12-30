@@ -100,13 +100,15 @@ class ClaudeCodeRunner:
         if os.environ.get("ANTHROPIC_API_KEY"):
             return True
 
-        # Check for Claude config directory (OAuth)
+        # Check for OAuth credentials in ~/.claude.json (primary location)
+        oauth_file = Path.home() / ".claude.json"
+        if oauth_file.exists():
+            return True
+
+        # Also check legacy location ~/.claude/credentials.json
         claude_dir = Path.home() / ".claude"
-        if claude_dir.exists():
-            # Look for credentials file
-            creds_file = claude_dir / "credentials.json"
-            if creds_file.exists():
-                return True
+        if claude_dir.exists() and (claude_dir / "credentials.json").exists():
+            return True
 
         return False
 

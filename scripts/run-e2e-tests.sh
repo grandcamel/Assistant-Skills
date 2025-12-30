@@ -82,8 +82,15 @@ check_auth() {
         return 0
     fi
 
+    # Check for OAuth credentials in ~/.claude.json (primary location)
+    if [[ -f "$HOME/.claude.json" ]]; then
+        echo -e "${GREEN}✓ Claude OAuth credentials found (~/.claude.json)${NC}"
+        return 0
+    fi
+
+    # Also check legacy location ~/.claude/credentials.json
     if [[ -f "$HOME/.claude/credentials.json" ]]; then
-        echo -e "${GREEN}✓ Claude OAuth credentials found${NC}"
+        echo -e "${GREEN}✓ Claude OAuth credentials found (~/.claude/credentials.json)${NC}"
         return 0
     fi
 
@@ -91,7 +98,7 @@ check_auth() {
     echo ""
     echo "Please set one of the following:"
     echo "  1. ANTHROPIC_API_KEY environment variable"
-    echo "  2. Claude Code OAuth credentials (~/.claude/credentials.json)"
+    echo "  2. Claude Code OAuth credentials (~/.claude.json)"
     echo ""
     echo "To get an API key: https://console.anthropic.com/"
     echo "To authenticate with OAuth: claude auth login"
