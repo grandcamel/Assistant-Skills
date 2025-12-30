@@ -29,7 +29,7 @@
   <a href="https://github.com/grandcamel/Assistant-Skills"><img src="https://img.shields.io/github/stars/grandcamel/Assistant-Skills?style=social" alt="GitHub Stars"></a>
   <a href="https://pypi.org/project/assistant-skills-lib/"><img src="https://img.shields.io/pypi/v/assistant-skills-lib?color=blue&logo=pypi&logoColor=white" alt="PyPI"></a>
   <img src="https://img.shields.io/badge/plugin-v1.2.0-6366F1?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0id2hpdGUiIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTMTcuNTIgMiAxMiAyem0wIDE4Yy00LjQxIDAtOC0zLjU5LTgtOHMzLjU5LTggOC04IDggMy41OSA4IDgtMy41OSA4LTggOHoiLz48L3N2Zz4=" alt="Plugin v1.2.0">
-  <img src="https://img.shields.io/badge/tests-140%2B%20passing-brightgreen?logo=pytest" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-200%2B%20passing-brightgreen?logo=pytest" alt="Tests">
   <img src="https://img.shields.io/badge/python-3.8+-3776AB?logo=python&logoColor=white" alt="Python 3.8+">
   <img src="https://img.shields.io/badge/marketplace-Claude%20Code-6366F1" alt="Claude Code Marketplace">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License">
@@ -386,6 +386,8 @@ E2E tests validate the plugin by interacting with the actual Claude Code CLI:
 ./scripts/run-e2e-tests.sh --local   # Run locally
 ```
 
+Failed test responses are logged to `test-results/e2e/responses_latest.log`.
+
 See [tests/e2e/README.md](tests/e2e/README.md) for details.
 
 ### Project Structure
@@ -394,7 +396,8 @@ See [tests/e2e/README.md](tests/e2e/README.md) for details.
 Assistant-Skills/
 ├── .claude-plugin/
 │   ├── plugin.json           # Plugin manifest
-│   └── marketplace.json      # Marketplace registry
+│   ├── marketplace.json      # Marketplace registry
+│   └── agents/               # Skill reviewer agents
 ├── skills/
 │   ├── assistant-builder/    # Project scaffolding
 │   ├── skills-optimizer/     # Token optimization
