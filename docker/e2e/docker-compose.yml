@@ -15,6 +15,7 @@ services:
       # Test configuration
       - E2E_TEST_TIMEOUT=${E2E_TEST_TIMEOUT:-120}
       - E2E_TEST_MODEL=${E2E_TEST_MODEL:-claude-sonnet-4-20250514}
+      - E2E_MAX_TURNS=${E2E_MAX_TURNS:-5}
       - E2E_VERBOSE=${E2E_VERBOSE:-false}
 
       # Claude Code settings
@@ -25,11 +26,14 @@ services:
       # Mount test results
       - ../../test-results/e2e:/workspace/test-results
 
-      # Optional: Mount Claude credentials for OAuth auth
-      - ${HOME}/.claude:/root/.claude:ro
+      # Claude Code needs a writable .claude directory for runtime data
+      # We use a named volume to persist across runs but not affect host
+      - claude-data:/home/testuser/.claude
 
-      # Optional: Mount custom config
-      - ${CLAUDE_CONFIG_DIR:-/dev/null}:/root/.config/claude-code:ro
+      # Optional: Mount host .claude directory for OAuth credentials
+      # The entrypoint will copy credentials.json if present
+      # Comment out if using only API key authentication
+      # - ${HOME}/.claude:/tmp/claude-credentials:ro
     working_dir: /workspace/plugin-source
 
     # Resource limits
@@ -49,12 +53,19 @@ services:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
       - CLAUDE_CODE_SKIP_OOBE=1
+      - CI=true
     volumes:
       - ../..:/workspace/plugin-source
-      - ${HOME}/.claude:/root/.claude:ro
+      - claude-data:/home/testuser/.claude
+      # Optional: Mount host .claude directory for OAuth credentials
+      # - ${HOME}/.claude:/tmp/claude-credentials:ro
     working_dir: /workspace/plugin-source
     stdin_open: true
     tty: true
     entrypoint: /bin/bash
     profiles:
       - debug
+
+# Named volumes for Claude Code runtime data
+volumes:
+  claude-data:
