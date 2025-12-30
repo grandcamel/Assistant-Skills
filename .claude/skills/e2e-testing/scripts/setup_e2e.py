@@ -297,6 +297,7 @@ Executes test cases defined in YAML against the Claude Code CLI.
 """
 
 import json
+import logging
 import os
 import re
 import subprocess
@@ -309,6 +310,46 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import yaml
+
+
+# Configure response logger
+def setup_response_logger(log_dir: Optional[Path] = None) -> logging.Logger:
+    """Set up a logger for E2E test responses."""
+    logger = logging.getLogger("e2e_responses")
+    logger.setLevel(logging.DEBUG)
+    logger.handlers = []
+
+    if log_dir is None:
+        log_dir = Path.cwd() / "test-results" / "e2e"
+    log_dir.mkdir(parents=True, exist_ok=True)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    log_file = log_dir / f"responses_{timestamp}.log"
+    file_handler = logging.FileHandler(log_file, encoding="utf-8")
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+    logger.addHandler(file_handler)
+
+    latest_log = log_dir / "responses_latest.log"
+    if latest_log.exists():
+        latest_log.unlink()
+    try:
+        latest_log.symlink_to(log_file.name)
+    except OSError:
+        pass
+
+    return logger
+
+
+_response_logger: Optional[logging.Logger] = None
+
+
+def get_response_logger() -> logging.Logger:
+    """Get or create the response logger."""
+    global _response_logger
+    if _response_logger is None:
+        _response_logger = setup_response_logger()
+    return _response_logger
 
 
 class TestStatus(Enum):
@@ -400,19 +441,24 @@ class ClaudeCodeRunner:
 
         return False
 
-    def send_prompt(self, prompt: str, timeout: Optional[int] = None) -> Dict[str, Any]:
+    def send_prompt(self, prompt: str, timeout: Optional[int] = None, test_id: str = "") -> Dict[str, Any]:
         """Send a prompt to Claude Code and capture the response."""
         timeout = timeout or self.timeout
         start_time = time.time()
+        logger = get_response_logger()
 
         cmd = [
             "claude",
             "--print",
             "--output-format", "text",
             "--model", self.model,
-            "--max-turns", "1",
+            "--max-turns", os.environ.get("E2E_MAX_TURNS", "5"),
+            "--dangerously-skip-permissions",
             prompt,
         ]
+
+        log_prefix = f"[{test_id}] " if test_id else ""
+        logger.info(f"{log_prefix}PROMPT: {prompt[:200]}{'...' if len(prompt) > 200 else ''}")
 
         try:
             result = subprocess.run(
@@ -424,29 +470,43 @@ class ClaudeCodeRunner:
                 env={**os.environ, "CLAUDE_CODE_SKIP_OOBE": "1"},
             )
 
-            return {
+            duration = time.time() - start_time
+            response = {
                 "success": result.returncode == 0,
                 "output": result.stdout,
                 "error": result.stderr,
                 "exit_code": result.returncode,
-                "duration": time.time() - start_time,
+                "duration": duration,
+                "prompt": prompt,
             }
 
+            logger.info(f"{log_prefix}RESPONSE (exit={result.returncode}, {duration:.1f}s):")
+            logger.info(f"{log_prefix}STDOUT:\\n{result.stdout or '(empty)'}")
+            if result.stderr:
+                logger.info(f"{log_prefix}STDERR:\\n{result.stderr}")
+            logger.info(f"{log_prefix}{'=' * 60}")
+
+            return response
+
         except subprocess.TimeoutExpired:
+            logger.error(f"{log_prefix}TIMEOUT after {timeout}s")
             return {
                 "success": False,
                 "output": "",
                 "error": f"Command timed out after {timeout}s",
                 "exit_code": -1,
                 "duration": timeout,
+                "prompt": prompt,
             }
         except Exception as e:
+            logger.error(f"{log_prefix}EXCEPTION: {e}")
             return {
                 "success": False,
                 "output": "",
                 "error": str(e),
                 "exit_code": -1,
                 "duration": time.time() - start_time,
+                "prompt": prompt,
             }
 
     def install_plugin(self, plugin_path: str = ".") -> Dict[str, Any]:
@@ -541,7 +601,7 @@ class E2ETestRunner:
         if self.verbose:
             print(f"  Running: {name}")
 
-        result = self.claude.send_prompt(prompt, timeout=timeout)
+        result = self.claude.send_prompt(prompt, timeout=timeout, test_id=test_id)
 
         if result["exit_code"] == -1 and "timed out" in result["error"]:
             return TestResult(
@@ -596,7 +656,7 @@ class E2ETestRunner:
 
         return results
 
-    def print_summary(self, results: List[SuiteResult]) -> bool:
+    def print_summary(self, results: List[SuiteResult], show_responses: bool = True) -> bool:
         """Print test execution summary."""
         total_passed = sum(r.passed for r in results)
         total_failed = sum(r.failed for r in results)
@@ -618,7 +678,28 @@ class E2ETestRunner:
             for result in results:
                 for test in result.tests:
                     if test.status != TestStatus.PASSED:
-                        print(f"    - {result.suite_name}::{test.test_id}")
+                        print(f"\\n    - {result.suite_name}::{test.test_id} ({test.status.value})")
+                        if test.details.get("validation", {}).get("failures"):
+                            for failure in test.details["validation"]["failures"]:
+                                print(f"      Reason: {failure}")
+
+                        # Show response output for failed tests
+                        if show_responses and (test.output or test.error):
+                            print(f"\\n      --- Response Output ---")
+                            if test.output:
+                                output = test.output[:2000]
+                                if len(test.output) > 2000:
+                                    output += f"\\n... (truncated, {len(test.output)} total chars)"
+                                for line in output.split("\\n"):
+                                    print(f"      {line}")
+                            if test.error:
+                                print(f"\\n      --- Stderr ---")
+                                for line in test.error[:500].split("\\n"):
+                                    print(f"      {line}")
+                            print(f"      --- End Response ---")
+
+            log_dir = Path.cwd() / "test-results" / "e2e"
+            print(f"\\n  Full responses logged to: {log_dir}/responses_latest.log")
 
         print("=" * 60)
         return total_failed == 0
@@ -737,7 +818,22 @@ import pytest
 import yaml
 from pathlib import Path
 
-from .runner import TestStatus
+from .runner import TestStatus, get_response_logger
+
+
+def format_response_for_assertion(result: dict, max_length: int = 1500) -> str:
+    """Format response output for inclusion in assertion messages."""
+    parts = []
+    if result.get("output"):
+        output = result["output"][:max_length]
+        if len(result["output"]) > max_length:
+            output += f"\\n... (truncated, {{len(result['output'])}} total chars)"
+        parts.append(f"\\n--- Response Output ---\\n{{output}}")
+    if result.get("error"):
+        error = result["error"][:500]
+        parts.append(f"\\n--- Stderr ---\\n{{error}}")
+    parts.append(f"\\n--- Exit Code: {{result.get('exit_code', 'N/A')}} ---")
+    return "".join(parts) if parts else "(no output)"
 
 
 pytestmark = [pytest.mark.e2e, pytest.mark.slow]
@@ -751,14 +847,16 @@ class TestPluginInstallation:
             pytest.skip("E2E disabled")
 
         result = claude_runner.install_plugin(".")
-        assert result["success"] or "already installed" in result["output"].lower()
+        assert result["success"] or "already installed" in result["output"].lower(), \\
+            f"Plugin installation failed{{format_response_for_assertion(result)}}"
 
     def test_skills_discoverable(self, claude_runner, installed_plugin, e2e_enabled):
         if not e2e_enabled:
             pytest.skip("E2E disabled")
 
         result = claude_runner.send_prompt("What skills do you have available?")
-        assert "skill" in result["output"].lower() or result["success"]
+        assert "skill" in result["output"].lower() or result["success"], \\
+            f"Skills not discoverable{{format_response_for_assertion(result)}}"
 
 
 @pytest.mark.skip(reason="Redundant with test_individual_case parametrized tests")
