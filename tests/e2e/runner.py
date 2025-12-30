@@ -7,17 +7,68 @@ capturing output and validating against expected outcomes.
 """
 
 import json
+import logging
 import os
 import re
 import subprocess
 import sys
 import time
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import yaml
+
+
+# Configure response logger
+def setup_response_logger(log_dir: Optional[Path] = None) -> logging.Logger:
+    """Set up a logger for E2E test responses."""
+    logger = logging.getLogger("e2e_responses")
+    logger.setLevel(logging.DEBUG)
+
+    # Clear existing handlers
+    logger.handlers = []
+
+    # Default log directory
+    if log_dir is None:
+        log_dir = Path.cwd() / "test-results" / "e2e"
+    log_dir.mkdir(parents=True, exist_ok=True)
+
+    # File handler with timestamp
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    log_file = log_dir / f"responses_{timestamp}.log"
+    file_handler = logging.FileHandler(log_file, encoding="utf-8")
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(logging.Formatter(
+        "%(asctime)s - %(levelname)s - %(message)s"
+    ))
+    logger.addHandler(file_handler)
+
+    # Also create a latest symlink/copy for easy access
+    latest_log = log_dir / "responses_latest.log"
+    if latest_log.exists():
+        latest_log.unlink()
+    try:
+        latest_log.symlink_to(log_file.name)
+    except OSError:
+        # Symlinks may not work on all systems, copy instead
+        pass
+
+    return logger
+
+
+# Global response logger
+_response_logger: Optional[logging.Logger] = None
+
+
+def get_response_logger() -> logging.Logger:
+    """Get or create the response logger."""
+    global _response_logger
+    if _response_logger is None:
+        _response_logger = setup_response_logger()
+    return _response_logger
 
 
 class TestStatus(Enum):
@@ -112,7 +163,7 @@ class ClaudeCodeRunner:
 
         return False
 
-    def send_prompt(self, prompt: str, timeout: Optional[int] = None) -> Dict[str, Any]:
+    def send_prompt(self, prompt: str, timeout: Optional[int] = None, test_id: str = "") -> Dict[str, Any]:
         """
         Send a prompt to Claude Code and capture the response.
 
@@ -122,9 +173,11 @@ class ClaudeCodeRunner:
             - error: str
             - exit_code: int
             - duration: float
+            - prompt: str (original prompt for logging)
         """
         timeout = timeout or self.timeout
         start_time = time.time()
+        logger = get_response_logger()
 
         # Build command
         # Use 3 turns to allow Claude to explore and respond
@@ -142,6 +195,10 @@ class ClaudeCodeRunner:
         if self.verbose:
             print(f"Executing: {' '.join(cmd[:5])}...")
 
+        # Log the prompt
+        log_prefix = f"[{test_id}] " if test_id else ""
+        logger.info(f"{log_prefix}PROMPT: {prompt[:200]}{'...' if len(prompt) > 200 else ''}")
+
         try:
             result = subprocess.run(
                 cmd,
@@ -154,29 +211,43 @@ class ClaudeCodeRunner:
 
             duration = time.time() - start_time
 
-            return {
+            response = {
                 "success": result.returncode == 0,
                 "output": result.stdout,
                 "error": result.stderr,
                 "exit_code": result.returncode,
                 "duration": duration,
+                "prompt": prompt,
             }
 
+            # Log the response
+            logger.info(f"{log_prefix}RESPONSE (exit={result.returncode}, {duration:.1f}s):")
+            logger.info(f"{log_prefix}STDOUT:\n{result.stdout or '(empty)'}")
+            if result.stderr:
+                logger.info(f"{log_prefix}STDERR:\n{result.stderr}")
+            logger.info(f"{log_prefix}{'=' * 60}")
+
+            return response
+
         except subprocess.TimeoutExpired:
+            logger.error(f"{log_prefix}TIMEOUT after {timeout}s")
             return {
                 "success": False,
                 "output": "",
                 "error": f"Command timed out after {timeout}s",
                 "exit_code": -1,
                 "duration": timeout,
+                "prompt": prompt,
             }
         except Exception as e:
+            logger.error(f"{log_prefix}EXCEPTION: {e}")
             return {
                 "success": False,
                 "output": "",
                 "error": str(e),
                 "exit_code": -1,
                 "duration": time.time() - start_time,
+                "prompt": prompt,
             }
 
     def install_plugin(self, plugin_path: str = ".") -> Dict[str, Any]:
@@ -304,8 +375,8 @@ class E2ETestRunner:
         if self.verbose:
             print(f"\n  Running: {name}")
 
-        # Execute prompt
-        result = self.claude.send_prompt(prompt, timeout=timeout)
+        # Execute prompt (pass test_id for logging)
+        result = self.claude.send_prompt(prompt, timeout=timeout, test_id=test_id)
 
         # Handle timeout
         if result["exit_code"] == -1 and "timed out" in result["error"]:
@@ -396,7 +467,7 @@ class E2ETestRunner:
 
         return results
 
-    def print_summary(self, results: List[SuiteResult]):
+    def print_summary(self, results: List[SuiteResult], show_responses: bool = True):
         """Print test execution summary."""
         total_passed = sum(r.passed for r in results)
         total_failed = sum(r.failed for r in results)
@@ -418,10 +489,30 @@ class E2ETestRunner:
             for result in results:
                 for test in result.tests:
                     if test.status != TestStatus.PASSED:
-                        print(f"    - {result.suite_name}::{test.test_id}")
+                        print(f"\n    - {result.suite_name}::{test.test_id} ({test.status.value})")
                         if test.details.get("validation", {}).get("failures"):
                             for failure in test.details["validation"]["failures"]:
-                                print(f"      {failure}")
+                                print(f"      Reason: {failure}")
+
+                        # Show response output for failed tests
+                        if show_responses and (test.output or test.error):
+                            print(f"\n      --- Response Output ---")
+                            if test.output:
+                                # Truncate very long output but show enough for debugging
+                                output = test.output[:2000]
+                                if len(test.output) > 2000:
+                                    output += f"\n... (truncated, {len(test.output)} total chars)"
+                                for line in output.split('\n'):
+                                    print(f"      {line}")
+                            if test.error:
+                                print(f"\n      --- Stderr ---")
+                                for line in test.error[:500].split('\n'):
+                                    print(f"      {line}")
+                            print(f"      --- End Response ---")
+
+            # Print log file location
+            log_dir = Path.cwd() / "test-results" / "e2e"
+            print(f"\n  Full responses logged to: {log_dir}/responses_latest.log")
 
         print("=" * 60)
 
