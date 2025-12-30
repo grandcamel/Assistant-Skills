@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Claude Code plugin marketplace providing templates, wizards, and tools for building Assistant Skills projects. It contains 3 production-ready skills and serves as both an installable plugin and a reference implementation.
+This is a Claude Code plugin marketplace providing templates, wizards, and tools for building Assistant Skills projects. It contains 5 production-ready skills and serves as both an installable plugin and a reference implementation.
 
 ## Commands
 
@@ -63,6 +63,27 @@ docker-compose -f docker/docker-compose.yml run --rm unit-tests-parallel
 docker-compose -f docker/docker-compose.yml run --rm live-tests
 ```
 
+### Run E2E Tests
+```bash
+# Run in Docker (recommended)
+./scripts/run-e2e-tests.sh
+
+# Run locally
+./scripts/run-e2e-tests.sh --local
+
+# With verbose output
+./scripts/run-e2e-tests.sh --verbose
+```
+
+E2E tests require `ANTHROPIC_API_KEY` environment variable.
+
+Configuration:
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `E2E_TEST_TIMEOUT` | 120 | Timeout per test (seconds) |
+| `E2E_TEST_MODEL` | claude-sonnet-4-20250514 | Claude model |
+| `E2E_MAX_TURNS` | 5 | Max conversation turns per test |
+
 ## Architecture
 
 ### Dual Directory Structure
@@ -102,6 +123,7 @@ Package source: https://github.com/grandcamel/assistant-skills-lib
 
 - `.claude-plugin/plugin.json` - Plugin definition
 - `.claude-plugin/marketplace.json` - Marketplace registry with installable plugins
+- `.claude-plugin/agents/` - Skill reviewer agents
 
 ## Skill Development Patterns
 
@@ -120,7 +142,7 @@ Skills use 3 levels to minimize token usage:
 ```yaml
 ---
 name: skill-name
-description: Third-person description with trigger phrases (under 1024 chars)
+description: Third-person description with trigger phrases (under 1024 chars). Use "This skill should be used when..." or include phrases like "add E2E tests", "test my plugin".
 ---
 
 # Skill Name
@@ -131,6 +153,8 @@ Brief intro (1-2 sentences).
 ## Usage Examples
 ## [Core sections]
 ```
+
+Note: The `when_to_use` field is deprecated. Include trigger phrases directly in `description`.
 
 ### Commit Convention
 
