@@ -3,7 +3,7 @@ E2E Tests for Assistant-Skills Plugin
 
 These tests interact with the actual Claude Code CLI and require:
 - ANTHROPIC_API_KEY environment variable, OR
-- Claude Code OAuth credentials (~/.claude/credentials.json)
+- Claude Code OAuth credentials (~/.claude.json)
 
 Run with:
     pytest tests/e2e/ -v --e2e-verbose
@@ -15,7 +15,22 @@ import pytest
 import yaml
 from pathlib import Path
 
-from .runner import TestStatus
+from .runner import TestStatus, get_response_logger
+
+
+def format_response_for_assertion(result: dict, max_length: int = 1500) -> str:
+    """Format response output for inclusion in assertion messages."""
+    parts = []
+    if result.get("output"):
+        output = result["output"][:max_length]
+        if len(result["output"]) > max_length:
+            output += f"\n... (truncated, {len(result['output'])} total chars)"
+        parts.append(f"\n--- Response Output ---\n{output}")
+    if result.get("error"):
+        error = result["error"][:500]
+        parts.append(f"\n--- Stderr ---\n{error}")
+    parts.append(f"\n--- Exit Code: {result.get('exit_code', 'N/A')} ---")
+    return "".join(parts) if parts else "(no output)"
 
 
 # Mark all tests in this module as E2E
@@ -36,7 +51,7 @@ class TestPluginInstallation:
         result = claude_runner.install_plugin(".")
 
         assert result["success"] or "already installed" in result["output"].lower(), \
-            f"Plugin installation failed: {result['error']}"
+            f"Plugin installation failed: {result['error']}{format_response_for_assertion(result)}"
 
     def test_skills_are_discoverable(self, claude_runner, installed_plugin, e2e_enabled):
         """Verify all skills are discoverable after installation."""
@@ -55,7 +70,7 @@ class TestPluginInstallation:
 
         # At least some skills should be found (Claude may phrase differently)
         assert len(found_skills) >= 2 or "skill" in output, \
-            f"Skills not properly discoverable. Output: {result['output'][:500]}"
+            f"Skills not properly discoverable.{format_response_for_assertion(result)}"
 
 
 class TestAssistantBuilder:
@@ -72,9 +87,9 @@ class TestAssistantBuilder:
 
         # Should not have fatal errors
         assert "exception" not in result["output"].lower(), \
-            f"Validation caused exception: {result['output']}"
+            f"Validation caused exception{format_response_for_assertion(result)}"
         assert "traceback" not in result["error"].lower(), \
-            f"Validation caused traceback: {result['error']}"
+            f"Validation caused traceback{format_response_for_assertion(result)}"
 
     def test_list_templates(self, claude_runner, installed_plugin, e2e_enabled):
         """Test listing available templates."""
@@ -87,7 +102,7 @@ class TestAssistantBuilder:
 
         # Should mention templates in some form
         assert result["success"] or "template" in result["output"].lower(), \
-            f"Template listing failed: {result['output']}"
+            f"Template listing failed{format_response_for_assertion(result)}"
 
 
 class TestSkillsOptimizer:
@@ -103,8 +118,10 @@ class TestSkillsOptimizer:
         )
 
         # Should complete without crashing
-        assert "exception" not in result["output"].lower()
-        assert "traceback" not in result["error"].lower()
+        assert "exception" not in result["output"].lower(), \
+            f"Skill analysis caused exception{format_response_for_assertion(result)}"
+        assert "traceback" not in result["error"].lower(), \
+            f"Skill analysis caused traceback{format_response_for_assertion(result)}"
 
 
 class TestLibraryPublisher:
@@ -121,8 +138,10 @@ class TestLibraryPublisher:
 
         # Should complete without actual errors (not just mentions of "exception" in descriptions)
         output = result["output"].lower()
-        assert "traceback" not in output, "Found traceback in output"
-        assert "exception:" not in output, "Found exception error in output"
+        assert "traceback" not in output, \
+            f"Found traceback in output{format_response_for_assertion(result)}"
+        assert "exception:" not in output, \
+            f"Found exception error in output{format_response_for_assertion(result)}"
 
 
 class TestYAMLTestCases:
@@ -189,5 +208,12 @@ def test_individual_case(
 
     result = e2e_runner.run_test(test_case)
 
-    assert result.status == TestStatus.PASSED, \
-        f"Test {test_id} failed: {result.details.get('validation', {}).get('failures', [])}"
+    # Build detailed failure message with response output
+    if result.status != TestStatus.PASSED:
+        failures = result.details.get('validation', {}).get('failures', [])
+        response_info = format_response_for_assertion({
+            "output": result.output,
+            "error": result.error,
+            "exit_code": result.details.get("exit_code", "N/A"),
+        })
+        pytest.fail(f"Test {test_id} failed: {failures}{response_info}")
