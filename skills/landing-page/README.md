@@ -1,4 +1,4 @@
-# GitHub Project Promote Skill
+# Landing Page Skill
 
 Create professional landing pages for Assistant Skills projects with consistent branding.
 
@@ -6,7 +6,7 @@ Create professional landing pages for Assistant Skills projects with consistent 
 
 ### User-Level (Recommended)
 
-The skill is already installed at `~/.claude/skills/github-project-promote/`.
+The skill is already installed at `~/.claude/skills/landing-page/`.
 
 Claude Code will automatically discover it for all your projects.
 
@@ -15,7 +15,7 @@ Claude Code will automatically discover it for all your projects.
 Copy to a specific project:
 
 ```bash
-cp -r ~/.claude/skills/github-project-promote /path/to/project/.claude/skills/
+cp -r ~/.claude/skills/landing-page /path/to/project/.claude/skills/
 ```
 
 ## Usage
@@ -36,13 +36,13 @@ Just ask Claude to generate a README:
 
 ```bash
 # Analyze current project
-python ~/.claude/skills/github-project-promote/scripts/analyze_project.py .
+python ~/.claude/skills/landing-page/scripts/analyze_project.py .
 
 # Analyze another project
-python ~/.claude/skills/github-project-promote/scripts/analyze_project.py ../Confluence-Assistant-Skills
+python ~/.claude/skills/landing-page/scripts/analyze_project.py ../Confluence-Assistant-Skills
 
 # Output as JSON
-python ~/.claude/skills/github-project-promote/scripts/analyze_project.py . --format json
+python ~/.claude/skills/landing-page/scripts/analyze_project.py . --format json
 ```
 
 Output:
@@ -66,13 +66,13 @@ Colors:
 
 ```bash
 # Generate with predefined palette
-python ~/.claude/skills/github-project-promote/scripts/generate_logo.py confluence --palette confluence -o logo.svg
+python ~/.claude/skills/landing-page/scripts/generate_logo.py confluence --palette confluence -o logo.svg
 
 # Custom colors
-python ~/.claude/skills/github-project-promote/scripts/generate_logo.py splunk --primary "#FF6900" --accent "#65A637" -o logo.svg
+python ~/.claude/skills/landing-page/scripts/generate_logo.py splunk --primary "#FF6900" --accent "#65A637" -o logo.svg
 
 # Static (no animation)
-python ~/.claude/skills/github-project-promote/scripts/generate_logo.py jira --palette jira --static -o logo-static.svg
+python ~/.claude/skills/landing-page/scripts/generate_logo.py jira --palette jira --static -o logo-static.svg
 ```
 
 ## Templates
