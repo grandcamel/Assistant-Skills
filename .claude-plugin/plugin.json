@@ -19,5 +19,6 @@
     "library-publisher"
   ],
   "skills": "./skills/",
+  "agents": "./agents/",
   "hooks": "./hooks/hooks.json"
 }
