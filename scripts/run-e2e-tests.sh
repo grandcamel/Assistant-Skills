@@ -11,6 +11,7 @@
 #   ANTHROPIC_API_KEY     - API key for Claude (required)
 #   E2E_TEST_TIMEOUT      - Timeout per test in seconds (default: 120)
 #   E2E_TEST_MODEL        - Claude model to use (default: claude-sonnet-4-20250514)
+#   E2E_MAX_TURNS         - Max conversation turns per test (default: 5)
 #   E2E_VERBOSE           - Enable verbose output (default: false)
 #
 # Alternative authentication:
@@ -63,6 +64,7 @@ while [[ $# -gt 0 ]]; do
             echo "  ANTHROPIC_API_KEY     API key for Claude (required)"
             echo "  E2E_TEST_TIMEOUT      Timeout per test in seconds (default: 120)"
             echo "  E2E_TEST_MODEL        Claude model (default: claude-sonnet-4-20250514)"
+            echo "  E2E_MAX_TURNS         Max conversation turns per test (default: 5)"
             echo "  E2E_VERBOSE           Enable verbose output (default: false)"
             exit 0
             ;;

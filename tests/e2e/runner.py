@@ -125,12 +125,15 @@ class ClaudeCodeRunner:
         start_time = time.time()
 
         # Build command
+        # Use 3 turns to allow Claude to explore and respond
+        max_turns = os.environ.get("E2E_MAX_TURNS", "3")
         cmd = [
             "claude",
             "--print",  # Non-interactive mode, print response
             "--output-format", "text",  # Plain text output
             "--model", self.model,
-            "--max-turns", "1",  # Single turn for testing
+            "--max-turns", max_turns,
+            "--dangerously-skip-permissions",  # Skip prompts in sandboxed test environment
             prompt,
         ]
 
