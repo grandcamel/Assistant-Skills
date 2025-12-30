@@ -1,11 +1,6 @@
 ---
 name: e2e-testing
 description: Set up end-to-end testing infrastructure for Assistant Skills plugins. Use when user wants to "add E2E tests", "test my plugin", "set up integration testing", "create plugin tests", or needs to validate their Claude Code plugin works correctly with real API calls.
-when_to_use:
-  - User wants to add E2E testing to their plugin
-  - User asks about testing Claude Code plugins
-  - User wants to validate plugin functionality
-  - User mentions integration testing for skills
 ---
 
 # E2E Testing
@@ -156,6 +151,7 @@ suites:
 | `ANTHROPIC_API_KEY` | - | API key for Claude |
 | `E2E_TEST_TIMEOUT` | 120 | Timeout per test (seconds) |
 | `E2E_TEST_MODEL` | claude-sonnet-4-20250514 | Claude model |
+| `E2E_MAX_TURNS` | 5 | Max conversation turns per test |
 | `E2E_VERBOSE` | false | Verbose output |
 
 ### Model Selection
@@ -164,7 +160,7 @@ Default is Sonnet for balance of capability and cost:
 
 ```bash
 # Use Haiku for faster/cheaper tests
-E2E_TEST_MODEL=claude-haiku-3-5-20250110 ./scripts/run-e2e-tests.sh
+E2E_TEST_MODEL=claude-haiku-4-20250514 ./scripts/run-e2e-tests.sh
 
 # Use Opus for most capable
 E2E_TEST_MODEL=claude-opus-4-20250514 ./scripts/run-e2e-tests.sh
@@ -200,6 +196,55 @@ git add . && git commit -m "feat(testing): add E2E test infrastructure"
 | Haiku | ~$0.001 | ~$0.02 |
 | Sonnet | ~$0.01 | ~$0.20 |
 | Opus | ~$0.05 | ~$1.00 |
+
+## Test Prompt Best Practices
+
+Well-designed test prompts complete in fewer turns and produce consistent results.
+
+### Avoid Exploration Triggers
+
+Prompts that trigger file exploration can exhaust turns before producing output:
+
+```yaml
+# BAD - May cause Claude to read files for multiple turns
+prompt: "What templates are available for this project?"
+prompt: "Analyze the shared library structure"
+prompt: "What are the main dependencies?"
+
+# GOOD - Direct questions that don't require file exploration
+prompt: "Without reading files, what templates are typically used for Assistant Skills projects?"
+prompt: "Without reading files, describe typical Python package dependencies for plugins."
+prompt: "Briefly explain what a landing-page skill typically does."
+```
+
+### Use Flexible Expectations
+
+Test validation should be lenient to handle Claude's varied responses:
+
+```yaml
+# BAD - Exact match is fragile
+expect:
+  output_contains:
+    - "assistant-skills-lib"
+
+# GOOD - Any of these terms indicates success
+expect:
+  output_contains_any:
+    - "skill"
+    - "plugin"
+    - "SKILL"
+    - "claude"
+  no_crashes: true  # More lenient than no_errors
+```
+
+### Prompt Design Patterns
+
+| Pattern | Example | Purpose |
+|---------|---------|---------|
+| Prefix constraint | "Without reading files, ..." | Prevents file exploration |
+| Direct question | "What is X?" vs "Analyze X" | Faster response |
+| Conceptual focus | "What does X typically do?" | Avoids project-specific exploration |
+| Flexible terms | Multiple synonyms in `output_contains_any` | Handles response variation |
 
 ## Customizing Tests
 
@@ -253,4 +298,37 @@ E2E_TEST_TIMEOUT=300 ./scripts/run-e2e-tests.sh
 ```bash
 sudo usermod -aG docker $USER
 # Then log out and back in
+```
+
+### Tests showing "Reached max turns"
+This usually means prompts are triggering file exploration. Fix by:
+1. Redesigning prompts (see Test Prompt Best Practices above)
+2. Increasing turn limit for complex tests:
+```bash
+E2E_MAX_TURNS=10 ./scripts/run-e2e-tests.sh
+```
+
+### Tests fail with "cannot use with root privileges"
+The Docker container runs as non-root user (`testuser`) to support `--dangerously-skip-permissions`. If you encounter permission issues with mounted volumes, check ownership settings in docker-compose.yml.
+
+### Docker volume permission errors
+If you see "Operation not permitted" errors on `.claude` directory:
+```bash
+# Remove stale Docker volume and rebuild
+docker volume rm e2e_claude-data
+docker compose -f docker/e2e/docker-compose.yml build --no-cache e2e-tests
+```
+
+### Tests skip with "E2E tests disabled"
+Ensure API key is passed to the container:
+```bash
+# Verify key is set
+echo "Key length: ${#ANTHROPIC_API_KEY}"
+
+# Run with explicit key passing
+docker run --rm --entrypoint bash \
+  -e "ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY" \
+  -w /workspace/plugin-source \
+  e2e_e2e-tests \
+  -c 'python -m pytest tests/e2e/ -v'
 ```
