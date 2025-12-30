@@ -143,6 +143,12 @@ Homepage = "https://github.com/{github_owner}/{package_name}"
 Repository = "https://github.com/{github_owner}/{package_name}"
 Issues = "https://github.com/{github_owner}/{package_name}/issues"
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+]
+
 [tool.hatch.build.targets.sdist]
 include = [
     "/src",
