@@ -745,8 +745,14 @@ class TestPluginInstallation:
         assert "skill" in result["output"].lower() or result["success"]
 
 
+@pytest.mark.skip(reason="Redundant with test_individual_case parametrized tests")
 class TestYAMLSuites:
-    """Run YAML-defined test suites."""
+    """Run YAML-defined test suites.
+
+    NOTE: This class is skipped by default because test_individual_case
+    already runs each YAML test case individually with better reporting.
+    Enable if you prefer aggregate test execution.
+    """
 
     def test_all_suites(self, e2e_runner, e2e_enabled):
         if not e2e_enabled:

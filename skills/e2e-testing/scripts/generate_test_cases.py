@@ -374,10 +374,16 @@ class Test{class_name}:
 
 '''
 
-    # Add YAML test runner class
+    # Add YAML test runner class (skipped by default - redundant with parametrized tests)
     code += '''
+@pytest.mark.skip(reason="Redundant with test_individual_case parametrized tests")
 class TestYAMLSuites:
-    """Run all YAML-defined test suites."""
+    """Run all YAML-defined test suites.
+
+    NOTE: This class is skipped by default because test_individual_case
+    already runs each YAML test case individually with better reporting.
+    Enable if you prefer aggregate test execution.
+    """
 
     def test_all_suites(self, e2e_runner, e2e_enabled):
         """Execute all test suites from test_cases.yaml."""
