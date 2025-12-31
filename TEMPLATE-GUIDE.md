@@ -42,7 +42,7 @@ Some templates have optional sections:
 ### Phase 1: Research (1-2 hours)
 
 ```
-00-project-lifecycle/
+templates/00-project-lifecycle/
 ├── 01-api-research-prompt.md      ◄── START HERE
 └── 02-gap-analysis-template.md    ◄── Create this document
 ```
@@ -60,7 +60,7 @@ Some templates have optional sections:
 ### Phase 2: Architecture (30 minutes)
 
 ```
-00-project-lifecycle/
+templates/00-project-lifecycle/
 ├── 03-architecture-prompt.md      ◄── Design your skills
 └── 04-implementation-plan.md      ◄── Create TDD plan
 ```
@@ -78,7 +78,7 @@ Some templates have optional sections:
 ### Phase 3: Scaffolding (15 minutes)
 
 ```
-01-project-scaffolding/
+templates/01-project-scaffolding/
 ├── project-init-prompt.md         ◄── Initialize project
 ├── CLAUDE.md.template
 ├── README.md.template
@@ -93,7 +93,7 @@ Some templates have optional sections:
 ### Phase 4: Shared Library (1-2 hours)
 
 ```
-02-shared-library/
+templates/02-shared-library/
 ├── shared-lib-prompt.md           ◄── Create shared utilities
 ├── client.py.template
 ├── config_manager.py.template
@@ -112,7 +112,7 @@ Some templates have optional sections:
 ### Phase 5: Skills Implementation (varies)
 
 ```
-03-skill-templates/
+templates/03-skill-templates/
 ├── skill-creation-prompt.md       ◄── For each skill
 ├── SKILL.md.template
 ├── script.py.template
@@ -122,14 +122,14 @@ Some templates have optional sections:
 
 For each skill:
 1. Create skill structure with `skill-creation-prompt.md`
-2. Write failing tests (see `04-testing/`)
+2. Write failing tests (see `templates/04-testing/`)
 3. Implement scripts
 4. Create SKILL.md with progressive disclosure
 
 ### Phase 6: Testing Throughout
 
 ```
-04-testing/
+templates/04-testing/
 ├── tdd-workflow-prompt.md         ◄── TDD guidance
 ├── unit-test.py.template
 ├── conftest.py.template
@@ -145,7 +145,7 @@ Use TDD workflow:
 ### Phase 7: Documentation
 
 ```
-05-documentation/
+templates/05-documentation/
 ├── WORKFLOWS.md.template
 ├── QUICK-REFERENCE.md.template
 └── TROUBLESHOOTING.md.template
@@ -159,7 +159,7 @@ Create user documentation:
 ### Phase 8: CI/CD Setup
 
 ```
-06-git-and-ci/
+templates/06-git-and-ci/
 ├── conventional-commits.md
 ├── tdd-commit-workflow.md
 └── github-workflows/
@@ -178,10 +178,10 @@ Set up version control:
 If you already have a project and want to add a new skill:
 
 ```
-1. 03-skill-templates/skill-creation-prompt.md
-2. 04-testing/tdd-workflow-prompt.md
-3. 04-testing/unit-test.py.template
-4. 03-skill-templates/SKILL.md.template
+1. templates/03-skill-templates/skill-creation-prompt.md
+2. templates/04-testing/tdd-workflow-prompt.md
+3. templates/04-testing/unit-test.py.template
+4. templates/03-skill-templates/SKILL.md.template
 5. Run regression tests
 6. Commit with TDD pattern
 ```
@@ -194,7 +194,7 @@ The router skill should be created after other skills exist:
 
 ```
 1. Review all existing skills
-2. 03-skill-templates/router-skill/router-skill-prompt.md
+2. templates/03-skill-templates/router-skill/router-skill-prompt.md
 3. Define routing tables
 4. Test skill invocation
 5. Document multi-skill operations

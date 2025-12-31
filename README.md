@@ -333,13 +333,13 @@ Comprehensive templates derived from production implementations:
 
 | Folder | Purpose |
 |--------|---------|
-| `00-project-lifecycle/` | API research, GAP analysis, architecture planning |
-| `01-project-scaffolding/` | Project initialization, directory structure, configs |
-| `02-shared-library/` | HTTP client, error handling, auth patterns |
-| `03-skill-templates/` | SKILL.md format, script templates, validators |
-| `04-testing/` | TDD workflow, pytest fixtures, test patterns |
-| `05-documentation/` | Workflow guides, reference docs, examples |
-| `06-git-and-ci/` | Commit conventions, GitHub Actions, releases |
+| `templates/00-project-lifecycle/` | API research, GAP analysis, architecture planning |
+| `templates/01-project-scaffolding/` | Project initialization, directory structure, configs |
+| `templates/02-shared-library/` | HTTP client, error handling, auth patterns |
+| `templates/03-skill-templates/` | SKILL.md format, script templates, validators |
+| `templates/04-testing/` | TDD workflow, pytest fixtures, test patterns |
+| `templates/05-documentation/` | Workflow guides, reference docs, examples |
+| `templates/06-git-and-ci/` | Commit conventions, GitHub Actions, releases |
 
 ---
 
@@ -472,9 +472,10 @@ Assistant-Skills/
 │   └── e2e/                  # E2E test image
 ├── .github/workflows/        # GitHub Actions
 │   └── docker-publish.yml    # Publish image on release
-├── 00-project-lifecycle/     # Templates
-├── 01-project-scaffolding/
-├── ...
+├── templates/                # Project templates
+│   ├── 00-project-lifecycle/
+│   ├── 01-project-scaffolding/
+│   └── ...
 ├── requirements.txt          # Python dependencies
 └── README.md
 ```

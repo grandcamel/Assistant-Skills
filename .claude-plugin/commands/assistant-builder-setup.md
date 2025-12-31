@@ -134,13 +134,13 @@ When the user asks about templates, point them to:
 
 | Category | Location | Contents |
 |----------|----------|----------|
-| Project Lifecycle | `00-project-lifecycle/` | API research, gap analysis, architecture |
-| Scaffolding | `01-project-scaffolding/` | Project init, config templates |
-| Shared Library | `02-shared-library/` | Client, config, error handling templates |
-| Skills | `03-skill-templates/` | SKILL.md, script, router templates |
-| Testing | `04-testing/` | TDD workflow, test templates |
-| Documentation | `05-documentation/` | Workflow, reference, troubleshooting |
-| Git/CI | `06-git-and-ci/` | Commits, GitHub Actions |
+| Project Lifecycle | `templates/00-project-lifecycle/` | API research, gap analysis, architecture |
+| Scaffolding | `templates/01-project-scaffolding/` | Project init, config templates |
+| Shared Library | `templates/02-shared-library/` | Client, config, error handling templates |
+| Skills | `templates/03-skill-templates/` | SKILL.md, script, router templates |
+| Testing | `templates/04-testing/` | TDD workflow, test templates |
+| Documentation | `templates/05-documentation/` | Workflow, reference, troubleshooting |
+| Git/CI | `templates/06-git-and-ci/` | Commits, GitHub Actions |
 
 ## Important Reminders
 

@@ -193,11 +193,11 @@ Types: `feat`, `fix`, `docs`, `test`, `refactor`, `style`, `perf`, `build`, `ci`
 
 ## Template Folders
 
-- `00-project-lifecycle/` - API research, GAP analysis, architecture
-- `01-project-scaffolding/` - Project initialization
-- `02-shared-library/` - HTTP client, error handling patterns
-- `03-skill-templates/` - SKILL.md format, script templates
-- `04-testing/` - TDD workflow, pytest patterns
-- `05-documentation/` - Workflow guides
-- `06-git-and-ci/` - Commit conventions, GitHub Actions
+- `templates/00-project-lifecycle/` - API research, GAP analysis, architecture
+- `templates/01-project-scaffolding/` - Project initialization
+- `templates/02-shared-library/` - HTTP client, error handling patterns
+- `templates/03-skill-templates/` - SKILL.md format, script templates
+- `templates/04-testing/` - TDD workflow, pytest patterns
+- `templates/05-documentation/` - Workflow guides
+- `templates/06-git-and-ci/` - Commit conventions, GitHub Actions
 - `prompts/` - Reusable prompts for integrating setup in other projects
