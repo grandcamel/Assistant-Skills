@@ -74,33 +74,30 @@ class TestTemplateValidationLive:
     """Live tests for template validation."""
 
     def test_all_templates_exist(self, project_root, live_test_enabled):
-        """Verify all expected template directories exist."""
+        """Verify all expected template directories exist at project root."""
         if not live_test_enabled:
             pytest.skip("Live tests disabled (set LIVE_TEST_ENABLED=true)")
-        
+
         expected_templates = [
             "00-project-lifecycle",
-            "01-project-scaffolding", 
+            "01-project-scaffolding",
             "02-shared-library",
             "03-skill-templates",
             "04-testing",
             "05-documentation",
             "06-git-and-ci",
         ]
-        
-        # Check in assistant-builder templates
-        templates_dir = project_root / "skills" / "assistant-builder" / "templates"
-        
-        if not templates_dir.exists():
-            pytest.skip(f"Templates directory not found: {templates_dir}")
-        
+
+        # Templates are at project root level
         for template in expected_templates:
-            template_path = templates_dir / template
+            template_path = project_root / template
             assert template_path.exists(), f"Template directory missing: {template}"
-            
-            # Each should have at least one .md file
+
+            # Each should have at least one .md or .md.template file
             md_files = list(template_path.glob("*.md"))
-            assert len(md_files) > 0, f"No .md files in {template}"
+            md_templates = list(template_path.glob("*.md.template"))
+            all_templates = md_files + md_templates
+            assert len(all_templates) > 0, f"No .md or .md.template files in {template}"
 
     def test_shared_library_package(self, project_root, live_test_enabled):
         """Verify assistant-skills-lib package is importable."""
