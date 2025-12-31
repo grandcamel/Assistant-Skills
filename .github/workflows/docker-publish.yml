@@ -10,7 +10,7 @@
 #
 # Usage:
 #   docker pull ghcr.io/grandcamel/assistant-skills:latest
-#   docker pull ghcr.io/grandcamel/assistant-skills:v1.0.0
+#   docker pull ghcr.io/grandcamel/assistant-skills:1.0.0
 
 name: Publish Docker Image
 
