@@ -29,15 +29,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && ln -sf /usr/bin/python3 /usr/bin/python
 
 # Create non-root user for security
-RUN groupadd -g 1000 claude && \
-    useradd -m -u 1000 -g claude claude
+RUN groupadd -g 1001 claude && \
+    useradd -m -u 1001 -g claude claude
 
 # Install Claude Code CLI globally
 RUN npm install -g @anthropic-ai/claude-code
 
 # Create directories
 RUN mkdir -p /home/claude/.claude /home/claude/.assistant-skills-venv /workspace && \
-    chown -R claude:claude /home/claude /workspace
+    chown -R 1001:1001 /home/claude /workspace
 
 # Switch to non-root user
 USER claude

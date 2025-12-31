@@ -2,8 +2,8 @@
 .git
 .gitignore
 
-# Docker
-docker/
+# Docker (exclude test infrastructure, keep runtime)
+docker/e2e/
 .dockerignore
 
 # Test results (regenerated in container)
