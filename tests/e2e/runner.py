@@ -145,12 +145,8 @@ class ClaudeCodeRunner:
                 "Claude Code CLI not found. Install with: npm install -g @anthropic-ai/claude-code"
             )
 
-    def _check_authentication(self) -> bool:
-        """Check if authentication is configured."""
-        # Check for API key
-        if os.environ.get("ANTHROPIC_API_KEY"):
-            return True
-
+    def _has_oauth_credentials(self) -> bool:
+        """Check if OAuth credentials are available."""
         # Check for OAuth credentials in ~/.claude.json (primary location)
         oauth_file = Path.home() / ".claude.json"
         if oauth_file.exists():
@@ -163,9 +159,49 @@ class ClaudeCodeRunner:
 
         return False
 
-    def send_prompt(self, prompt: str, timeout: Optional[int] = None, test_id: str = "") -> Dict[str, Any]:
+    def _check_authentication(self) -> bool:
+        """Check if authentication is configured."""
+        # Check for OAuth credentials first (preferred for local runs)
+        if self._has_oauth_credentials():
+            return True
+
+        # Check for API key
+        if os.environ.get("ANTHROPIC_API_KEY"):
+            return True
+
+        return False
+
+    def _get_subprocess_env(self) -> Dict[str, str]:
+        """
+        Get environment variables for subprocess.
+
+        When OAuth credentials exist, we exclude ANTHROPIC_API_KEY
+        to let Claude CLI use OAuth instead.
+        """
+        env = dict(os.environ)
+        env["CLAUDE_CODE_SKIP_OOBE"] = "1"
+
+        # If OAuth credentials exist, remove API key to force OAuth usage
+        if self._has_oauth_credentials() and "ANTHROPIC_API_KEY" in env:
+            del env["ANTHROPIC_API_KEY"]
+
+        return env
+
+    def send_prompt(
+        self,
+        prompt: str,
+        timeout: Optional[int] = None,
+        test_id: str = "",
+        max_turns: Optional[int] = None
+    ) -> Dict[str, Any]:
         """
         Send a prompt to Claude Code and capture the response.
+
+        Args:
+            prompt: The prompt to send
+            timeout: Optional timeout in seconds (default: self.timeout)
+            test_id: Optional test identifier for logging
+            max_turns: Optional max conversation turns (default: E2E_MAX_TURNS env or 5)
 
         Returns dict with:
             - success: bool
@@ -180,14 +216,13 @@ class ClaudeCodeRunner:
         logger = get_response_logger()
 
         # Build command
-        # Use 3 turns to allow Claude to explore and respond
-        max_turns = os.environ.get("E2E_MAX_TURNS", "3")
+        turns = str(max_turns) if max_turns else os.environ.get("E2E_MAX_TURNS", "5")
         cmd = [
             "claude",
             "--print",  # Non-interactive mode, print response
             "--output-format", "text",  # Plain text output
             "--model", self.model,
-            "--max-turns", max_turns,
+            "--max-turns", turns,
             "--dangerously-skip-permissions",  # Skip prompts in sandboxed test environment
             prompt,
         ]
@@ -206,7 +241,7 @@ class ClaudeCodeRunner:
                 capture_output=True,
                 text=True,
                 timeout=timeout,
-                env={**os.environ, "CLAUDE_CODE_SKIP_OOBE": "1"},
+                env=self._get_subprocess_env(),
             )
 
             duration = time.time() - start_time
@@ -371,12 +406,13 @@ class E2ETestRunner:
         prompt = test["prompt"]
         expect = test.get("expect", {})
         timeout = test.get("timeout", self.timeout)
+        max_turns = test.get("max_turns")  # None uses default
 
         if self.verbose:
             print(f"\n  Running: {name}")
 
         # Execute prompt (pass test_id for logging)
-        result = self.claude.send_prompt(prompt, timeout=timeout, test_id=test_id)
+        result = self.claude.send_prompt(prompt, timeout=timeout, test_id=test_id, max_turns=max_turns)
 
         # Handle timeout
         if result["exit_code"] == -1 and "timed out" in result["error"]:

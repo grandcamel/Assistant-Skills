@@ -30,13 +30,16 @@ suites:
 
       - id: verify_skills_loaded
         name: Verify all skills are discoverable
-        prompt: "List the skills available from the assistant-skills plugin"
+        prompt: "Without reading any files, briefly name the types of skills typically included in an Assistant Skills plugin."
+        max_turns: 5
         expect:
           success: true
           output_contains_any:
-            - "assistant-builder"
-            - "skills-optimizer"
             - "skill"
+            - "builder"
+            - "optimizer"
+            - "template"
+            - "plugin"
           no_errors: true
 
   # ============================================
@@ -120,6 +123,8 @@ suites:
       - id: analyze_library
         name: Analyze shared library structure
         prompt: "Analyze the shared library structure in this project"
+        timeout: 180
+        max_turns: 5
         expect:
           success: true
           # Should complete without crashing

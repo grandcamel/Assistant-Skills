@@ -77,31 +77,45 @@ done
 
 # Check authentication
 check_auth() {
+    # For local runs, prefer OAuth credentials
+    if [[ "$USE_DOCKER" == "false" ]]; then
+        # Check for OAuth credentials in ~/.claude.json (primary location)
+        if [[ -f "$HOME/.claude.json" ]]; then
+            echo -e "${GREEN}✓ Using Claude OAuth credentials (~/.claude.json)${NC}"
+            # Unset API key to force OAuth usage
+            unset ANTHROPIC_API_KEY
+            return 0
+        fi
+
+        # Also check legacy location ~/.claude/credentials.json
+        if [[ -f "$HOME/.claude/credentials.json" ]]; then
+            echo -e "${GREEN}✓ Using Claude OAuth credentials (~/.claude/credentials.json)${NC}"
+            # Unset API key to force OAuth usage
+            unset ANTHROPIC_API_KEY
+            return 0
+        fi
+    fi
+
+    # For Docker or when no OAuth, use API key
     if [[ -n "$ANTHROPIC_API_KEY" ]]; then
         echo -e "${GREEN}✓ ANTHROPIC_API_KEY is set${NC}"
         return 0
     fi
 
-    # Check for OAuth credentials in ~/.claude.json (primary location)
-    if [[ -f "$HOME/.claude.json" ]]; then
-        echo -e "${GREEN}✓ Claude OAuth credentials found (~/.claude.json)${NC}"
-        return 0
-    fi
-
-    # Also check legacy location ~/.claude/credentials.json
-    if [[ -f "$HOME/.claude/credentials.json" ]]; then
-        echo -e "${GREEN}✓ Claude OAuth credentials found (~/.claude/credentials.json)${NC}"
+    # Final check for OAuth (Docker case where OAuth might be mounted)
+    if [[ -f "$HOME/.claude.json" ]] || [[ -f "$HOME/.claude/credentials.json" ]]; then
+        echo -e "${GREEN}✓ Claude OAuth credentials found${NC}"
         return 0
     fi
 
     echo -e "${RED}✗ No authentication configured${NC}"
     echo ""
     echo "Please set one of the following:"
-    echo "  1. ANTHROPIC_API_KEY environment variable"
-    echo "  2. Claude Code OAuth credentials (~/.claude.json)"
+    echo "  1. Claude Code OAuth credentials (~/.claude.json) - preferred for local"
+    echo "  2. ANTHROPIC_API_KEY environment variable - required for Docker"
     echo ""
-    echo "To get an API key: https://console.anthropic.com/"
     echo "To authenticate with OAuth: claude auth login"
+    echo "To get an API key: https://console.anthropic.com/"
     return 1
 }
 
