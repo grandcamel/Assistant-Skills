@@ -51,8 +51,7 @@ def validate_skill_md(skill_path: Path) -> list:
             issues.append(('warning', 'SKILL.md frontmatter missing "name"'))
         if 'description:' not in content:
             issues.append(('warning', 'SKILL.md frontmatter missing "description"'))
-        if 'when_to_use:' not in content:
-            issues.append(('warning', 'SKILL.md frontmatter missing "when_to_use"'))
+        # Note: when_to_use is deprecated - trigger phrases should be in description
 
     # Check for key sections
     if '## What This Skill Does' not in content and '## Quick Start' not in content:
@@ -70,12 +69,21 @@ def validate_scripts(skill_path: Path) -> list:
         issues.append(('warning', 'Missing scripts directory'))
         return issues
 
-    scripts = list(scripts_dir.glob('*.py'))
-    scripts = [s for s in scripts if s.name != '__init__.py']
+    # Check for Python scripts
+    py_scripts = list(scripts_dir.glob('*.py'))
+    py_scripts = [s for s in py_scripts if s.name != '__init__.py']
+
+    # Check for shell scripts
+    sh_scripts = list(scripts_dir.glob('*.sh'))
+
+    scripts = py_scripts + sh_scripts
 
     if not scripts:
         issues.append(('warning', 'No scripts found'))
         return issues
+
+    # Only validate Python scripts in detail
+    scripts = py_scripts
 
     for script in scripts:
         content = script.read_text()
@@ -99,10 +107,21 @@ def validate_scripts(skill_path: Path) -> list:
     return issues
 
 
-def validate_tests(skill_path: Path) -> list:
-    """Validate test files in a skill."""
+def validate_tests(skill_path: Path, alt_skill_path: Path = None) -> list:
+    """Validate test files in a skill.
+
+    Args:
+        skill_path: Primary skill path to check
+        alt_skill_path: Alternative path (for dual directory structure)
+    """
     issues = []
     tests_dir = skill_path / 'tests'
+
+    # Check alternative path if primary doesn't have tests
+    if not tests_dir.exists() and alt_skill_path:
+        alt_tests_dir = alt_skill_path / 'tests'
+        if alt_tests_dir.exists():
+            tests_dir = alt_tests_dir
 
     if not tests_dir.exists():
         issues.append(('warning', 'Missing tests directory'))
@@ -146,6 +165,8 @@ def run_validation(project_path: str, strict: bool = False) -> dict:
     project = detect_project(str(path))
     if project:
         skills_dir = path / '.claude' / 'skills'
+        # Alternative location for dual directory structure (plugin projects)
+        alt_skills_dir = path / 'skills'
 
         for skill_dir in skills_dir.iterdir():
             if skill_dir.is_dir() and skill_dir.name != 'shared':
@@ -155,16 +176,22 @@ def run_validation(project_path: str, strict: bool = False) -> dict:
                     'infos': []
                 }
 
+                # Get alternative skill path if exists
+                alt_skill_dir = alt_skills_dir / skill_dir.name if alt_skills_dir.exists() else None
+
                 # Validate SKILL.md
                 for level, msg in validate_skill_md(skill_dir):
                     skill_issues[level + 's'].append(msg)
 
-                # Validate scripts
+                # Validate scripts (check both locations)
                 for level, msg in validate_scripts(skill_dir):
+                    # If scripts not found, check alt location
+                    if 'Missing scripts' in msg and alt_skill_dir and (alt_skill_dir / 'scripts').exists():
+                        continue  # Skip warning, scripts exist in alt location
                     skill_issues[level + 's'].append(msg)
 
-                # Validate tests
-                for level, msg in validate_tests(skill_dir):
+                # Validate tests (check both locations)
+                for level, msg in validate_tests(skill_dir, alt_skill_dir):
                     skill_issues[level + 's'].append(msg)
 
                 result['skills'][skill_dir.name] = skill_issues
