@@ -11,7 +11,7 @@
 <sub>Faster skill<br>development</sub>
 </td>
 <td align="center">
-<h2>5</h2>
+<h2>6</h2>
 <sub>Production-ready<br>skills included</sub>
 </td>
 <td align="center">
@@ -113,12 +113,7 @@ From Claude Code:
 /plugin grandcamel/Assistant-Skills
 ```
 
-This adds the marketplace and installs the `assistant-skills` plugin with all 5 skills.
-
-**Prerequisites:** Install the shared library:
-```bash
-pip install assistant-skills-lib
-```
+This adds the marketplace and installs the `assistant-skills` plugin with all 6 skills.
 
 **Alternative: Clone locally**
 ```bash
@@ -126,7 +121,24 @@ git clone https://github.com/grandcamel/Assistant-Skills.git
 cd Assistant-Skills && /plugin .
 ```
 
-### 2. Create Your First Project
+### 2. Set Up Environment
+
+Run the setup wizard to configure the shared Python environment:
+```
+/assistant-skills-setup
+```
+
+The wizard will:
+- Create a shared venv at `~/.assistant-skills-venv/`
+- Install Python dependencies
+- Add the `claude-as` shell function to your `.bashrc`/`.zshrc`
+
+After setup, use `claude-as` instead of `claude` to run with dependencies:
+```bash
+claude-as  # Runs Claude with Assistant Skills venv
+```
+
+### 3. Create Your First Project
 
 ```
 "Create a new Slack Assistant Skills project"
@@ -137,7 +149,7 @@ Or use the interactive wizard:
 /assistant-builder-setup
 ```
 
-### 3. Start Building
+### 4. Start Building
 
 Claude scaffolds your project with:
 - Optimized directory structure
@@ -153,11 +165,26 @@ Claude scaffolds your project with:
 
 | Skill | Purpose | Example |
 |-------|---------|---------|
+| **setup-wizard** | Configure shared venv & shell | `/assistant-skills-setup` |
 | **assistant-builder** | Create & extend projects | `"Add a search skill to my project"` |
 | **skills-optimizer** | Audit token efficiency | `"Analyze my skill for optimization"` |
 | **landing-page** | Generate branded READMEs | `"Create a landing page for this project"` |
 | **library-publisher** | Publish shared libs to PyPI | `"Publish my shared library as a PyPI package"` |
 | **e2e-testing** | Set up E2E test infrastructure | `"Add E2E tests to my plugin"` |
+
+### setup-wizard
+
+Configure the shared Python environment for all Assistant Skills plugins.
+
+```bash
+# Run the interactive setup wizard
+/assistant-skills-setup
+
+# After setup, use claude-as to run with dependencies
+claude-as
+```
+
+Creates `~/.assistant-skills-venv/` (shared venv) and adds `claude-as` function to shell.
 
 ### assistant-builder
 
@@ -328,12 +355,14 @@ flowchart TD
     U["User Request"] --> CC["Claude Code"]
     CC --> AS["Assistant Skills<br/>Plugin"]
 
+    AS --> SW["setup-wizard<br/>Environment Setup"]
     AS --> AB["assistant-builder<br/>Project Scaffolding"]
     AS --> SO["skills-optimizer<br/>Token Efficiency"]
     AS --> LP["landing-page<br/>README Branding"]
     AS --> LIB["library-publisher<br/>PyPI Publishing"]
     AS --> E2E["e2e-testing<br/>E2E Test Infrastructure"]
 
+    SW --> VE["Shared Venv<br/>~/.assistant-skills-venv"]
     AB --> T["Templates"]
     AB --> SH["Shared Library"]
 
@@ -397,13 +426,19 @@ Assistant-Skills/
 ├── .claude-plugin/
 │   ├── plugin.json           # Plugin manifest
 │   ├── marketplace.json      # Marketplace registry
+│   ├── commands/             # Slash commands
+│   │   ├── assistant-skills-setup.md
+│   │   └── assistant-builder-setup.md
 │   └── agents/               # Skill reviewer agents
 ├── skills/
+│   ├── setup-wizard/         # Environment setup
 │   ├── assistant-builder/    # Project scaffolding
 │   ├── skills-optimizer/     # Token optimization
 │   ├── landing-page/         # README branding
 │   ├── library-publisher/    # PyPI publishing
 │   └── e2e-testing/          # E2E test infrastructure
+├── hooks/                    # Plugin hooks
+│   └── hooks.json            # SessionStart health checks
 ├── docker/                   # Docker test infrastructure
 ├── 00-project-lifecycle/     # Templates
 ├── 01-project-scaffolding/
