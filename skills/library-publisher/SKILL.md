@@ -1,12 +1,6 @@
 ---
 name: library-publisher
 description: Extract shared libraries from Assistant Skills projects and publish them as PyPI packages. Use when user wants to "publish shared library", "create PyPI package", "extract library to package", "migrate to pip install", or needs to convert vendored code into an installable package with CI/CD.
-when_to_use:
-  - User wants to publish a shared library to PyPI
-  - User wants to extract vendored code into a package
-  - User asks about PyPI package creation
-  - User wants to simplify PYTHONPATH requirements
-  - User mentions "pip install" for their library
 ---
 
 # Library Publisher

@@ -1,4 +1,5 @@
 ---
+name: assistant-builder-setup
 description: Interactive wizard to create or extend Assistant Skills projects
 ---
 

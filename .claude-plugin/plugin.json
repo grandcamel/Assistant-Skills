@@ -18,10 +18,10 @@
     "e2e-testing",
     "library-publisher"
   ],
-  "skills": "./skills/",
+  "skills": "../skills/",
   "agents": "./agents/",
   "commands": "./commands/",
-  "hooks": "./hooks/hooks.json",
+  "hooks": "../hooks/hooks.json",
   "assistant_skills": {
     "requirements": "requirements.txt",
     "env_vars": []

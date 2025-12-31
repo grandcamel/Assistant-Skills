@@ -124,13 +124,14 @@ Per-test overrides in `test_cases.yaml`:
 
 ## Architecture
 
-### Dual Directory Structure
+### Directory Structure
 
-Skills exist in two locations that must be kept in sync:
-- `.claude/skills/` - Project-level skills (loaded when working in this repo)
-- `skills/` - Plugin-installable copies (distributed via marketplace)
+Skills and tests are in a single location:
+- `skills/` - All skills with their scripts, docs, and tests
+- `.claude-plugin/` - Plugin manifest, commands, and agents
+- `hooks/` - Plugin hooks (SessionStart health checks)
 
-When modifying a skill, update both locations. **Exception**: Tests only exist in `skills/*/tests/` (not duplicated in `.claude/skills/`).
+The plugin.json references `../skills/` to load skills from the repo root.
 
 ### Test Infrastructure
 
@@ -165,11 +166,10 @@ Package source: https://github.com/grandcamel/assistant-skills-lib
 
 ### Plugin Manifest Files
 
-- `.claude-plugin/plugin.json` - Plugin definition with `assistant_skills` config
+- `.claude-plugin/plugin.json` - Plugin definition (references `../skills/` and `../hooks/`)
 - `.claude-plugin/marketplace.json` - Marketplace registry with installable plugins
 - `.claude-plugin/commands/` - Slash commands (assistant-skills-setup, assistant-builder-setup)
 - `.claude-plugin/agents/` - Skill reviewer agents
-- `hooks/hooks.json` - Plugin hooks (SessionStart health checks)
 
 ## Skill Development Patterns
 
