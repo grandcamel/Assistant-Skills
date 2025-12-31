@@ -102,7 +102,9 @@ docker build -t assistant-skills -f docker/runtime/Dockerfile .
 ./scripts/run-e2e-tests.sh --verbose
 ```
 
-E2E tests require `ANTHROPIC_API_KEY` environment variable.
+E2E tests support two authentication methods:
+- **Local runs (`--local`)**: Prefers Claude OAuth credentials (`~/.claude.json`). Run `claude auth login` to authenticate.
+- **Docker runs**: Requires `ANTHROPIC_API_KEY` environment variable.
 
 Configuration:
 | Variable | Default | Description |
@@ -110,6 +112,15 @@ Configuration:
 | `E2E_TEST_TIMEOUT` | 120 | Timeout per test (seconds) |
 | `E2E_TEST_MODEL` | claude-sonnet-4-20250514 | Claude model |
 | `E2E_MAX_TURNS` | 5 | Max conversation turns per test |
+
+Per-test overrides in `test_cases.yaml`:
+```yaml
+- name: "Complex test"
+  prompt: "Do something complex"
+  max_turns: 10      # Override default
+  timeout: 180       # Override default
+  expected_patterns: ["success"]
+```
 
 ## Architecture
 
@@ -200,6 +211,30 @@ feat(scope): implement feature (N/N tests passing)
 ```
 
 Types: `feat`, `fix`, `docs`, `test`, `refactor`, `style`, `perf`, `build`, `ci`, `chore`
+
+## Phase 2: CLI Entry Points
+
+This project serves as the foundation for Phase 2 refactoring across Assistant-Skills projects. The `test_entrypoint/` package validates that pip-installed CLI entry points work in the Claude Code sandbox.
+
+### Sandbox Compatibility Test
+
+```bash
+# Install and test entry point
+cd test_entrypoint && pip install -e .
+which test-claude-ep          # Check PATH discovery
+test-claude-ep --test-arg     # Direct invocation
+python -m test_entrypoint     # Module invocation
+```
+
+Results documented in `SANDBOX_TEST_RESULTS.md`. All three invocation methods work successfully.
+
+### Phase 2 Documentation
+
+| File | Purpose |
+|------|---------|
+| `SANDBOX_TEST_RESULTS.md` | Entry point compatibility test results |
+| `REFACTORING_INSTRUCTIONS.md` | Phase 2 tasks for this project |
+| `PHASE2_FEEDBACK*.md` | Engineering review of Phase 2 proposals |
 
 ## Template Folders
 

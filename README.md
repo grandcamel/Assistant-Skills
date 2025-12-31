@@ -430,6 +430,11 @@ Templates derived from production implementations:
 
 ```bash
 pip install -r requirements.txt
+
+# Run all skill tests (221 tests)
+pytest skills/*/tests/ -v
+
+# Run specific skill tests
 pytest skills/assistant-builder/tests/ -v
 ```
 
@@ -438,10 +443,16 @@ pytest skills/assistant-builder/tests/ -v
 E2E tests validate the plugin by interacting with the actual Claude Code CLI:
 
 ```bash
-# Requires ANTHROPIC_API_KEY
-./scripts/run-e2e-tests.sh           # Run in Docker
-./scripts/run-e2e-tests.sh --local   # Run locally
+# Run in Docker (requires ANTHROPIC_API_KEY)
+./scripts/run-e2e-tests.sh
+
+# Run locally (prefers OAuth, falls back to API key)
+./scripts/run-e2e-tests.sh --local
 ```
+
+Authentication:
+- **Local runs**: Prefers OAuth credentials (`~/.claude.json`). Run `claude auth login` first.
+- **Docker runs**: Requires `ANTHROPIC_API_KEY` environment variable.
 
 Failed test responses are logged to `test-results/e2e/responses_latest.log`.
 
@@ -476,6 +487,10 @@ Assistant-Skills/
 │   ├── 00-project-lifecycle/
 │   ├── 01-project-scaffolding/
 │   └── ...
+├── tests/                    # E2E and integration tests
+│   └── e2e/                  # End-to-end tests
+├── pytest.ini                # Pytest configuration
+├── conftest.py               # Shared test fixtures
 ├── requirements.txt          # Python dependencies
 └── README.md
 ```
