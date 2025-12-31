@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Claude Code plugin marketplace providing templates, wizards, and tools for building Assistant Skills projects. It contains 5 production-ready skills and serves as both an installable plugin and a reference implementation.
+This is a Claude Code plugin marketplace providing templates, wizards, and tools for building Assistant Skills projects. It contains 6 production-ready skills and serves as both an installable plugin and a reference implementation.
 
 ## Commands
 
@@ -13,8 +13,18 @@ This is a Claude Code plugin marketplace providing templates, wizards, and tools
 pip install -r requirements.txt
 ```
 
+### Run Setup Wizard
+```
+/assistant-skills-setup
+```
+Configures shared venv at `~/.assistant-skills-venv/` and adds `claude-as` shell function.
+
 ### Run Tests
 ```bash
+# Run all skill tests
+pytest skills/*/tests/ -v
+
+# Run specific skill tests
 pytest skills/assistant-builder/tests/ -v
 ```
 
@@ -121,9 +131,11 @@ Package source: https://github.com/grandcamel/assistant-skills-lib
 
 ### Plugin Manifest Files
 
-- `.claude-plugin/plugin.json` - Plugin definition
+- `.claude-plugin/plugin.json` - Plugin definition with `assistant_skills` config
 - `.claude-plugin/marketplace.json` - Marketplace registry with installable plugins
+- `.claude-plugin/commands/` - Slash commands (assistant-skills-setup, assistant-builder-setup)
 - `.claude-plugin/agents/` - Skill reviewer agents
+- `hooks/hooks.json` - Plugin hooks (SessionStart health checks)
 
 ## Skill Development Patterns
 
@@ -175,3 +187,4 @@ Types: `feat`, `fix`, `docs`, `test`, `refactor`, `style`, `perf`, `build`, `ci`
 - `04-testing/` - TDD workflow, pytest patterns
 - `05-documentation/` - Workflow guides
 - `06-git-and-ci/` - Commit conventions, GitHub Actions
+- `prompts/` - Reusable prompts for integrating setup in other projects
