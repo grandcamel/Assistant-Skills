@@ -119,7 +119,13 @@ Skills exist in two locations that must be kept in sync:
 - `.claude/skills/` - Project-level skills (loaded when working in this repo)
 - `skills/` - Plugin-installable copies (distributed via marketplace)
 
-When modifying a skill, update both locations.
+When modifying a skill, update both locations. **Exception**: Tests only exist in `skills/*/tests/` (not duplicated in `.claude/skills/`).
+
+### Test Infrastructure
+
+- `pytest.ini` - Root config with `--import-mode=importlib` to avoid conftest conflicts
+- `conftest.py` - Root fixtures (`temp_path`, `temp_dir`, `claude_project_structure`)
+- `skills/*/tests/conftest.py` - Skill-specific fixtures (use root fixtures as dependencies)
 
 ### Shared Library
 
