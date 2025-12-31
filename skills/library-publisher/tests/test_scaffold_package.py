@@ -41,9 +41,9 @@ class TestExtractExportsFromModule:
         assert "format_tree" in exports
         assert "TableFormatter" in exports
 
-    def test_ignores_private_functions(self, temp_dir):
+    def test_ignores_private_functions(self, temp_path):
         """Test that private functions are ignored."""
-        module = temp_dir / "test_module.py"
+        module = temp_path / "test_module.py"
         module.write_text('''
 def public_func():
     pass
@@ -105,10 +105,10 @@ class TestGenerateInitPy:
 class TestScaffoldPackage:
     """Tests for scaffold_package function."""
 
-    def test_dry_run_returns_info(self, sample_library, temp_dir):
+    def test_dry_run_returns_info(self, sample_library, temp_path):
         """Test dry run returns package info without creating files."""
         lib_dir = sample_library / "skills" / "shared" / "scripts" / "lib"
-        output_dir = temp_dir / "output"
+        output_dir = temp_path / "output"
 
         result = scaffold_package(
             package_name="test-lib",
@@ -121,10 +121,10 @@ class TestScaffoldPackage:
         assert result["import_name"] == "test_lib"
         assert not output_dir.exists()
 
-    def test_creates_package_structure(self, sample_library, temp_dir):
+    def test_creates_package_structure(self, sample_library, temp_path):
         """Test creating complete package structure."""
         lib_dir = sample_library / "skills" / "shared" / "scripts" / "lib"
-        output_dir = temp_dir / "test-lib"
+        output_dir = temp_path / "test-lib"
 
         result = scaffold_package(
             package_name="test-lib",

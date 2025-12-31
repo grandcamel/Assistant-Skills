@@ -1,22 +1,19 @@
-"""Pytest configuration and fixtures for library-publisher tests."""
+"""Pytest configuration and fixtures for library-publisher tests.
+
+Note: Common fixtures (temp_dir, temp_path) are provided by root conftest.py.
+"""
 
 import pytest
-import tempfile
-import shutil
 from pathlib import Path
 
 
 @pytest.fixture
-def temp_dir():
-    """Create a temporary directory for tests."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        yield Path(tmpdir)
+def sample_library(temp_path):
+    """Create a sample shared library structure.
 
-
-@pytest.fixture
-def sample_library(temp_dir):
-    """Create a sample shared library structure."""
-    lib_dir = temp_dir / "skills" / "shared" / "scripts" / "lib"
+    Uses temp_path from root conftest.py.
+    """
+    lib_dir = temp_path / "skills" / "shared" / "scripts" / "lib"
     lib_dir.mkdir(parents=True)
 
     # Create formatters.py
@@ -50,7 +47,7 @@ def validate_email(email):
     # Create __init__.py
     (lib_dir / "__init__.py").write_text('')
 
-    return temp_dir
+    return temp_path
 
 
 @pytest.fixture

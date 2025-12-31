@@ -1,3 +1,0 @@
-"""
-Shared Library Tests
-"""

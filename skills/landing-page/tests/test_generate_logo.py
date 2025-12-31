@@ -179,9 +179,9 @@ class TestIntegration:
         assert 'width="512"' in svg
         assert 'height="512"' in svg
 
-    def test_logo_saves_to_file(self, temp_dir):
+    def test_logo_saves_to_file(self, temp_path):
         """Test saving logo to file."""
-        output_path = temp_dir / "logo.svg"
+        output_path = temp_path / "logo.svg"
         svg = generate_logo("test")
         output_path.write_text(svg)
 

@@ -25,9 +25,9 @@ class TestFindLibraryModules:
         assert "formatters" in modules
         assert "validators" in modules
 
-    def test_returns_default_for_missing_library(self, temp_dir):
+    def test_returns_default_for_missing_library(self, temp_path):
         """Test returns default modules when library not found."""
-        modules = find_library_modules(temp_dir)
+        modules = find_library_modules(temp_path)
 
         # Should return common module names
         assert len(modules) > 0
@@ -36,9 +36,9 @@ class TestFindLibraryModules:
 class TestMigrateFileImports:
     """Tests for migrate_file_imports function."""
 
-    def test_migrates_from_imports(self, temp_dir):
+    def test_migrates_from_imports(self, temp_path):
         """Test migrating 'from module import' statements."""
-        script = temp_dir / "test_script.py"
+        script = temp_path / "test_script.py"
         script.write_text('''from formatters import format_table
 from validators import validate_url
 ''')
@@ -53,9 +53,9 @@ from validators import validate_url
         assert "from mypackage_lib import validate_url" in content
         assert len(changes) == 2
 
-    def test_migrates_import_statements(self, temp_dir):
+    def test_migrates_import_statements(self, temp_path):
         """Test migrating 'import module' statements."""
-        script = temp_dir / "test_script.py"
+        script = temp_path / "test_script.py"
         script.write_text('''import formatters
 import validators
 ''')
@@ -69,9 +69,9 @@ import validators
         assert "from mypackage_lib import formatters" in content
         assert len(changes) == 2
 
-    def test_removes_syspath_manipulation(self, temp_dir):
+    def test_removes_syspath_manipulation(self, temp_path):
         """Test removing sys.path manipulation."""
-        script = temp_dir / "test_script.py"
+        script = temp_path / "test_script.py"
         script.write_text('''import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent / 'lib'))
@@ -109,15 +109,15 @@ class TestFindPythonFiles:
 class TestCreateRequirementsTxt:
     """Tests for create_requirements_txt function."""
 
-    def test_includes_package(self, temp_dir):
+    def test_includes_package(self, temp_path):
         """Test including the package in requirements."""
-        content = create_requirements_txt(temp_dir, "mypackage_lib")
+        content = create_requirements_txt(temp_path, "mypackage_lib")
 
         assert "mypackage-lib>=0.1.0" in content
 
-    def test_includes_pytest(self, temp_dir):
+    def test_includes_pytest(self, temp_path):
         """Test including pytest in requirements."""
-        content = create_requirements_txt(temp_dir, "mypackage_lib")
+        content = create_requirements_txt(temp_path, "mypackage_lib")
 
         assert "pytest" in content
 

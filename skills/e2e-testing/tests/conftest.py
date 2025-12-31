@@ -1,15 +1,20 @@
-"""Pytest fixtures for e2e-testing skill tests."""
+"""Pytest fixtures for e2e-testing skill tests.
+
+Note: Common fixtures (temp_dir, temp_path) are provided by root conftest.py.
+"""
 
 import json
 import pytest
-import shutil
 from pathlib import Path
 
 
 @pytest.fixture
-def temp_project(tmp_path):
-    """Create a temporary project structure for testing."""
-    project = tmp_path / "test-project"
+def temp_project(temp_path):
+    """Create a temporary project structure for testing.
+
+    Uses temp_path from root conftest.py.
+    """
+    project = temp_path / "test-project"
     project.mkdir()
 
     # Create .claude-plugin directory
@@ -134,9 +139,12 @@ suites:
 
 
 @pytest.fixture
-def empty_project(tmp_path):
-    """Create an empty project without plugin structure."""
-    project = tmp_path / "empty-project"
+def empty_project(temp_path):
+    """Create an empty project without plugin structure.
+
+    Uses temp_path from root conftest.py.
+    """
+    project = temp_path / "empty-project"
     project.mkdir()
     (project / "README.md").write_text("# Empty Project\n")
     return project

@@ -38,24 +38,24 @@ class TestFindSkillsDirectory:
 class TestExtractProductName:
     """Tests for extract_product_name function."""
 
-    def test_extracts_from_directory_name(self, temp_dir):
+    def test_extracts_from_directory_name(self, temp_path):
         """Test extracting product name from directory name."""
-        project = temp_dir / "Jira-Assistant-Skills"
+        project = temp_path / "Jira-Assistant-Skills"
         project.mkdir()
         result = extract_product_name(project)
         assert result == "Jira"
 
-    def test_extracts_from_readme(self, temp_dir):
+    def test_extracts_from_readme(self, temp_path):
         """Test extracting product name from README title."""
-        project = temp_dir / "some-project"
+        project = temp_path / "some-project"
         project.mkdir()
         (project / "README.md").write_text("# Confluence Assistant Skills\n")
         result = extract_product_name(project)
         assert result == "Confluence"
 
-    def test_falls_back_to_directory_name(self, temp_dir):
+    def test_falls_back_to_directory_name(self, temp_path):
         """Test fallback to cleaned directory name."""
-        project = temp_dir / "my-custom-project"
+        project = temp_path / "my-custom-project"
         project.mkdir()
         result = extract_product_name(project)
         assert "My" in result or "Custom" in result
@@ -126,24 +126,24 @@ class TestExtractSkillInfo:
 class TestDetectQueryLanguage:
     """Tests for detect_query_language function."""
 
-    def test_detects_jql(self, temp_dir):
+    def test_detects_jql(self, temp_path):
         """Test detecting JQL for Jira."""
-        result = detect_query_language(temp_dir, "jira")
+        result = detect_query_language(temp_path, "jira")
         assert result == "JQL"
 
-    def test_detects_cql(self, temp_dir):
+    def test_detects_cql(self, temp_path):
         """Test detecting CQL for Confluence."""
-        result = detect_query_language(temp_dir, "confluence")
+        result = detect_query_language(temp_path, "confluence")
         assert result == "CQL"
 
-    def test_detects_spl(self, temp_dir):
+    def test_detects_spl(self, temp_path):
         """Test detecting SPL for Splunk."""
-        result = detect_query_language(temp_dir, "splunk")
+        result = detect_query_language(temp_path, "splunk")
         assert result == "SPL"
 
-    def test_returns_default(self, temp_dir):
+    def test_returns_default(self, temp_path):
         """Test returning default query language."""
-        result = detect_query_language(temp_dir, "unknown")
+        result = detect_query_language(temp_path, "unknown")
         assert result == "Query Language"
 
 
@@ -183,10 +183,10 @@ class TestAnalyzeProject:
         assert result["test_count"] == 3
         assert "test-skill" in result["skill_names"]
 
-    def test_raises_for_missing_project(self, temp_dir):
+    def test_raises_for_missing_project(self, temp_path):
         """Test error for non-existent project."""
         with pytest.raises(ValueError, match="does not exist"):
-            analyze_project(temp_dir / "nonexistent")
+            analyze_project(temp_path / "nonexistent")
 
     def test_raises_for_missing_skills(self, project_without_skills):
         """Test error when no skills directory."""

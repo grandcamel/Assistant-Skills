@@ -1,25 +1,24 @@
 """
 Pytest fixtures for assistant-builder tests.
+
+Note: Common fixtures (temp_dir, temp_path, sample_template, sample_context)
+are provided by the root conftest.py.
 """
 
 import pytest
-import tempfile
-import shutil
 from pathlib import Path
 
 
 @pytest.fixture
-def temp_dir():
-    """Create a temporary directory for tests."""
-    temp = tempfile.mkdtemp()
-    yield temp
-    shutil.rmtree(temp, ignore_errors=True)
+def sample_project(temp_path):
+    """Create a sample project structure for assistant-builder testing.
 
+    This fixture creates a complete project structure suitable for
+    testing project validation and skill addition.
 
-@pytest.fixture
-def sample_project(temp_dir):
-    """Create a sample project structure for testing."""
-    project_path = Path(temp_dir) / "Test-Skills"
+    Uses temp_path from root conftest.py.
+    """
+    project_path = temp_path / "Test-Skills"
     project_path.mkdir()
 
     # Create basic structure
@@ -42,32 +41,11 @@ def sample_project(temp_dir):
     skill_md.write_text("""---
 name: "test-sample"
 description: "Sample skill for testing"
-when_to_use: |
-  - Testing
 ---
 
 # Sample Skill
+
+A sample skill for testing.
 """)
 
     return str(project_path)
-
-
-@pytest.fixture
-def sample_template():
-    """Sample template content for testing."""
-    return """# {{PROJECT_NAME}}
-
-This is a template for {{API_NAME}}.
-
-Topic: {{TOPIC}}
-"""
-
-
-@pytest.fixture
-def sample_context():
-    """Sample context for template rendering."""
-    return {
-        "PROJECT_NAME": "Test-Skills",
-        "API_NAME": "Test API",
-        "TOPIC": "test"
-    }

@@ -1,21 +1,19 @@
-"""Pytest configuration and fixtures for landing-page tests."""
+"""Pytest configuration and fixtures for landing-page tests.
+
+Note: Common fixtures (temp_dir, temp_path) are provided by root conftest.py.
+"""
 
 import pytest
-import tempfile
 from pathlib import Path
 
 
 @pytest.fixture
-def temp_dir():
-    """Create a temporary directory for tests."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        yield Path(tmpdir)
+def sample_project(temp_path):
+    """Create a sample Assistant Skills project structure.
 
-
-@pytest.fixture
-def sample_project(temp_dir):
-    """Create a sample Assistant Skills project structure."""
-    project_dir = temp_dir / "Test-Assistant-Skills"
+    Uses temp_path from root conftest.py.
+    """
+    project_dir = temp_path / "Test-Assistant-Skills"
     project_dir.mkdir()
 
     # Create .claude/skills structure
@@ -66,9 +64,12 @@ def test_three(): pass
 
 
 @pytest.fixture
-def project_without_skills(temp_dir):
-    """Create a project without .claude/skills directory."""
-    project_dir = temp_dir / "No-Skills-Project"
+def project_without_skills(temp_path):
+    """Create a project without .claude/skills directory.
+
+    Uses temp_path from root conftest.py.
+    """
+    project_dir = temp_path / "No-Skills-Project"
     project_dir.mkdir()
     (project_dir / "README.md").write_text('# No Skills\n')
     return project_dir

@@ -1,21 +1,24 @@
 """Tests for update_docs.py module."""
 
 import pytest
+import importlib.util
 from pathlib import Path
 
-# Import functions from update_docs
-import sys
-sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
-from update_docs import (
-    add_pypi_badge,
-    update_shared_library_section,
-    update_test_commands,
-    update_project_structure,
-    update_claude_md,
-    update_readme,
-    update_claude_md_file,
-    update_docs,
-)
+# Import functions from update_docs using explicit path
+# This avoids conflicts with similarly-named modules in other skills
+_script_path = Path(__file__).parent.parent / "scripts" / "update_docs.py"
+_spec = importlib.util.spec_from_file_location("lib_publisher_update_docs", _script_path)
+_update_docs_module = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_update_docs_module)
+
+add_pypi_badge = _update_docs_module.add_pypi_badge
+update_shared_library_section = _update_docs_module.update_shared_library_section
+update_test_commands = _update_docs_module.update_test_commands
+update_project_structure = _update_docs_module.update_project_structure
+update_claude_md = _update_docs_module.update_claude_md
+update_readme = _update_docs_module.update_readme
+update_claude_md_file = _update_docs_module.update_claude_md_file
+update_docs = _update_docs_module.update_docs
 
 
 class TestAddPyPiBadge:
@@ -166,9 +169,9 @@ class TestUpdateReadme:
         result = update_readme(sample_project, "test-lib", "test_lib", dry_run=True)
         assert result["updated"] is True
 
-    def test_returns_error_when_missing(self, temp_dir):
+    def test_returns_error_when_missing(self, temp_path):
         """Test error when README.md missing."""
-        result = update_readme(temp_dir, "test-lib", "test_lib")
+        result = update_readme(temp_path, "test-lib", "test_lib")
         assert result["updated"] is False
         assert "not found" in result["error"]
 
@@ -181,9 +184,9 @@ class TestUpdateClaudeMdFile:
         result = update_claude_md_file(sample_project, "test-lib", "test_lib", dry_run=True)
         assert result["updated"] is True
 
-    def test_returns_error_when_missing(self, temp_dir):
+    def test_returns_error_when_missing(self, temp_path):
         """Test error when CLAUDE.md missing."""
-        result = update_claude_md_file(temp_dir, "test-lib", "test_lib")
+        result = update_claude_md_file(temp_path, "test-lib", "test_lib")
         assert result["updated"] is False
         assert "not found" in result["error"]
 

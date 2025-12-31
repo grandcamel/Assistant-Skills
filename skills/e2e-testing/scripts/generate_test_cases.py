@@ -429,12 +429,16 @@ def generate_test_cases(
     # Generate test cases YAML
     test_cases = generate_test_cases_yaml(analysis)
 
-    # Determine output paths
+    # Determine output paths (resolve to handle symlinks like /var -> /private/var)
     if output_path is None:
         output_path = project_path / "tests" / "e2e" / "test_cases.yaml"
+    else:
+        output_path = Path(output_path).resolve()
 
     if pytest_output is None:
         pytest_output = project_path / "tests" / "e2e" / "test_plugin_e2e.py"
+    else:
+        pytest_output = Path(pytest_output).resolve()
 
     # Write YAML
     output_path.parent.mkdir(parents=True, exist_ok=True)

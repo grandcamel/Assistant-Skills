@@ -24,9 +24,9 @@ class TestFindLibraryDir:
         assert lib_dir.exists()
         assert "shared/scripts/lib" in str(lib_dir)
 
-    def test_returns_none_for_nonexistent(self, temp_dir):
+    def test_returns_none_for_nonexistent(self, temp_path):
         """Test returns None when library doesn't exist."""
-        lib_dir = find_library_dir(temp_dir)
+        lib_dir = find_library_dir(temp_path)
         assert lib_dir is None
 
 
@@ -60,17 +60,17 @@ class TestAnalyzeModule:
 class TestSuggestPackageName:
     """Tests for suggest_package_name function."""
 
-    def test_extracts_topic_from_name(self, temp_dir):
+    def test_extracts_topic_from_name(self, temp_path):
         """Test extracting topic from project name."""
-        project = temp_dir / "Jira-Assistant-Skills"
+        project = temp_path / "Jira-Assistant-Skills"
         project.mkdir()
 
         name = suggest_package_name(project)
         assert name == "jira-assistant-skills-lib"
 
-    def test_handles_simple_name(self, temp_dir):
+    def test_handles_simple_name(self, temp_path):
         """Test handling simple project name."""
-        project = temp_dir / "my-project"
+        project = temp_path / "my-project"
         project.mkdir()
 
         name = suggest_package_name(project)
@@ -95,9 +95,9 @@ class TestAnalyzeLibrary:
         assert result["usage"]["files_using_library"] >= 1
         assert result["usage"]["total_imports"] >= 1
 
-    def test_handles_missing_library(self, temp_dir):
+    def test_handles_missing_library(self, temp_path):
         """Test handling project without library."""
-        result = analyze_library(temp_dir)
+        result = analyze_library(temp_path)
 
         assert result["library_found"] is False
         assert "error" in result
