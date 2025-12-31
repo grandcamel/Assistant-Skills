@@ -11,6 +11,10 @@ Interactive setup for the shared Assistant Skills Python environment.
 
 Run `/assistant-skills-setup` to start the interactive setup wizard.
 
+## Architecture
+
+This skill is **command-based** - it uses the `/assistant-skills-setup` slash command rather than Python scripts. The command guides Claude through the setup steps interactively using `AskUserQuestion` for user choices.
+
 ## What Gets Configured
 
 | Component | Location | Purpose |
@@ -122,3 +126,15 @@ rm -rf ~/.assistant-skills ~/.assistant-skills-venv
 # Run setup again
 /assistant-skills-setup
 ```
+
+## Related Components
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| Setup Command | `.claude-plugin/commands/assistant-skills-setup.md` | Interactive wizard steps |
+| SessionStart Hook | `hooks/hooks.json` | Health checks on session start |
+| Plugin Config | `.claude-plugin/plugin.json` | `assistant_skills` schema for env vars |
+
+## Related Documentation
+
+- [Reference Guide](docs/reference.md) - Detailed schemas and troubleshooting
