@@ -54,8 +54,8 @@ ENV PATH="/home/claude/.assistant-skills-venv/bin:$PATH"
 RUN pip install --upgrade pip && \
     pip install assistant-skills-lib requests pyyaml python-dotenv
 
-# Copy entrypoint script
-COPY --chown=claude:claude entrypoint.sh /home/claude/entrypoint.sh
+# Copy entrypoint script (path relative to build context)
+COPY --chown=claude:claude docker/runtime/entrypoint.sh /home/claude/entrypoint.sh
 RUN chmod +x /home/claude/entrypoint.sh
 
 # Default working directory for user projects
