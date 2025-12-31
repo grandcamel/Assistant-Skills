@@ -50,7 +50,14 @@ def mock_env_vars(mock_config):
 
 @pytest.fixture(autouse=True)
 def reset_modules():
-    """Reset module imports between tests."""
+    """
+    Reset module imports between tests.
+
+    This is necessary because scripts are imported as modules during tests,
+    and Python caches module imports. Without clearing the cache, changes
+    to module-level state (like config loading) persist between tests,
+    causing test pollution and false positives/negatives.
+    """
     # Remove any cached script imports
     modules_to_remove = [
         key for key in sys.modules.keys()

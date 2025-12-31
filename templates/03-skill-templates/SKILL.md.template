@@ -231,5 +231,5 @@ export {{API_NAME}}_API_TOKEN="your-token"
 # .claude/settings.local.json
 ```
 
-See [Configuration Guide](docs/configuration.md) for details.
+See project CLAUDE.md for configuration details.
 ```

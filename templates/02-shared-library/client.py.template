@@ -75,7 +75,7 @@ class {{CLIENT_CLASS}}:
         session.headers.update({
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "{{AUTH_HEADER}}": "{{AUTH_FORMAT}}".format(token=self.token),
+            "{{AUTH_HEADER}}": f"{{AUTH_PREFIX}}{self.token}",
         })
 
         # Add email header if required
@@ -225,7 +225,15 @@ class {{CLIENT_CLASS}}:
         return response.json() if response.text else {}
 
     # =========================================================================
-    # PAGINATION HELPERS - Choose one based on {{PAGINATION_STYLE}}
+    # PAGINATION HELPERS - Choose based on your API's pagination style:
+    #
+    # | Style       | Use When                              | Example APIs          |
+    # |-------------|---------------------------------------|-----------------------|
+    # | offset      | API uses startAt/offset + limit       | Jira, Confluence      |
+    # | cursor      | API returns next_cursor/nextCursor    | Slack, Twitter        |
+    # | page        | API uses page number + per_page       | GitHub, GitLab        |
+    #
+    # Delete the pagination methods you don't need.
     # =========================================================================
 
     # --- OFFSET-BASED PAGINATION ---
