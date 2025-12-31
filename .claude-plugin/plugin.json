@@ -20,5 +20,10 @@
   ],
   "skills": "./skills/",
   "agents": "./agents/",
-  "hooks": "./hooks/hooks.json"
+  "commands": "./commands/",
+  "hooks": "./hooks/hooks.json",
+  "assistant_skills": {
+    "requirements": "requirements.txt",
+    "env_vars": []
+  }
 }
