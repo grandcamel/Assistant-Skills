@@ -32,7 +32,6 @@ setup_e2e.py
 │   ├── Dockerfile
 │   └── docker-compose.yml
 ├── Create tests/e2e/
-│   ├── __init__.py
 │   ├── conftest.py
 │   ├── runner.py
 │   └── test_plugin_e2e.py
@@ -90,11 +89,13 @@ Tests require Claude API access. Supported methods:
 
 | Method | Location | Setup |
 |--------|----------|-------|
-| API Key | Environment | `export ANTHROPIC_API_KEY="sk-ant-..."` |
 | OAuth | `~/.claude.json` | `claude auth login` |
 | OAuth (legacy) | `~/.claude/credentials.json` | Older Claude Code versions |
+| API Key | Environment | `export ANTHROPIC_API_KEY="sk-ant-..."` |
 
 The test framework checks all locations automatically.
+
+**Local runs prefer OAuth**: When running with `--local`, OAuth credentials take precedence over API keys. This ensures local development uses your authenticated Claude session rather than a separate API key.
 
 ## Test Case Generation
 
@@ -262,11 +263,15 @@ suites:
       - id: my_test
         name: My custom test
         prompt: "Do something specific"
+        timeout: 180        # Optional: override default timeout (seconds)
+        max_turns: 5        # Optional: override default max turns
         expect:
           output_contains:
             - "expected output"
           no_errors: true
 ```
+
+Per-test `timeout` and `max_turns` override the global defaults for tests that need more time or conversation turns.
 
 ### Adding Pytest Tests
 
@@ -280,6 +285,18 @@ class TestCustom:
 
         result = claude_runner.send_prompt("My prompt")
         assert "expected" in result["output"].lower()
+
+    def test_complex_feature(self, claude_runner, e2e_enabled):
+        """Test that needs more turns or longer timeout."""
+        if not e2e_enabled:
+            pytest.skip("E2E disabled")
+
+        result = claude_runner.send_prompt(
+            "Complex prompt requiring exploration",
+            timeout=180,    # Override default timeout
+            max_turns=10    # Override default max turns
+        )
+        assert result["success"]
 ```
 
 ## Response Logging

@@ -57,12 +57,16 @@ class TestSetupE2E:
         assert "docker/e2e/Dockerfile" in result["files_created"]
 
     def test_creates_test_directory(self, temp_project):
-        """Should create tests/e2e directory."""
+        """Should create tests/e2e directory without __init__.py.
+
+        Note: __init__.py is intentionally not created to avoid pytest
+        collection conflicts when projects have multiple test directories.
+        """
         setup_e2e(temp_project)
 
         e2e_dir = temp_project / "tests" / "e2e"
         assert e2e_dir.exists()
-        assert (e2e_dir / "__init__.py").exists()
+        assert not (e2e_dir / "__init__.py").exists()  # Avoid pytest conflicts
         assert (e2e_dir / "conftest.py").exists()
         assert (e2e_dir / "runner.py").exists()
 

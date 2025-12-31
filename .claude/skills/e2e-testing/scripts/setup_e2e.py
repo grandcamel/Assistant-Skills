@@ -1008,11 +1008,12 @@ def setup_e2e(
     result["project_info"] = project_info
 
     # Define files to create
+    # Note: No __init__.py in tests/e2e/ to avoid pytest collection conflicts
+    # when projects have multiple test directories with conftest.py files
     files = {
         "docker/e2e/Dockerfile": generate_dockerfile(project_info),
         "docker/e2e/docker-compose.yml": generate_docker_compose(project_info),
         "requirements-e2e.txt": generate_requirements_e2e(),
-        "tests/e2e/__init__.py": '"""E2E tests."""',
         "tests/e2e/conftest.py": generate_conftest(project_info),
         "tests/e2e/runner.py": generate_runner(),
         "tests/e2e/test_plugin_e2e.py": generate_test_plugin_e2e(project_info),
