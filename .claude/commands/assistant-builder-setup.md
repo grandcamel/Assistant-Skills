@@ -44,7 +44,7 @@ Show a summary and ask for confirmation before creating files.
 Run the scaffold_project.py script with the collected parameters:
 
 ```bash
-python .claude/skills/assistant-builder/scripts/scaffold_project.py \
+python ${CLAUDE_PLUGIN_ROOT}/skills/assistant-builder/scripts/scaffold_project.py \
   --name "{{PROJECT_NAME}}" \
   --topic "{{TOPIC}}" \
   --api "{{API_NAME}}" \
@@ -103,7 +103,7 @@ Suggest the TDD workflow:
 When showing examples, use show_reference.py:
 
 ```bash
-python .claude/skills/assistant-builder/scripts/show_reference.py \
+python ${CLAUDE_PLUGIN_ROOT}/skills/assistant-builder/scripts/show_reference.py \
   --topic "{{TOPIC}}" \
   --project "{{PROJECT}}"
 ```
@@ -113,7 +113,7 @@ python .claude/skills/assistant-builder/scripts/show_reference.py \
 Run validate_project.py on the target directory:
 
 ```bash
-python .claude/skills/assistant-builder/scripts/validate_project.py "{{PATH}}"
+python ${CLAUDE_PLUGIN_ROOT}/skills/assistant-builder/scripts/validate_project.py "{{PATH}}"
 ```
 
 Report:
