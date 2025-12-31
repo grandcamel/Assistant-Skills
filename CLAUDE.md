@@ -78,6 +78,10 @@ docker-compose -f docker/docker-compose.yml run --rm live-tests
 # Run Claude with Assistant Skills in Docker
 ./scripts/claude-as-docker.sh
 
+# Or pull from GitHub Container Registry
+docker run -it -e ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY \
+  -v $(pwd):/workspace ghcr.io/grandcamel/assistant-skills:latest
+
 # With plugins and marketplaces
 CLAUDE_PLUGINS="owner/plugin" CLAUDE_MARKETPLACES="owner/marketplace" \
   ./scripts/claude-as-docker.sh
