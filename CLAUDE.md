@@ -61,7 +61,7 @@ pytest skills/assistant-builder/tests/test_validate_project.py::test_validates_e
 ./scripts/test.sh matrix
 ```
 
-### Docker Compose
+### Docker Compose (Testing)
 ```bash
 # Run unit tests
 docker-compose -f docker/docker-compose.yml run --rm unit-tests
@@ -71,6 +71,19 @@ docker-compose -f docker/docker-compose.yml run --rm unit-tests-parallel
 
 # Run live integration tests (requires .env)
 docker-compose -f docker/docker-compose.yml run --rm live-tests
+```
+
+### Docker Runtime (Claude Code)
+```bash
+# Run Claude with Assistant Skills in Docker
+./scripts/claude-as-docker.sh
+
+# With plugins and marketplaces
+CLAUDE_PLUGINS="owner/plugin" CLAUDE_MARKETPLACES="owner/marketplace" \
+  ./scripts/claude-as-docker.sh
+
+# Build locally
+docker build -t assistant-skills -f docker/runtime/Dockerfile .
 ```
 
 ### Run E2E Tests

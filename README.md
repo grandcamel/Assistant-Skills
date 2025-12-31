@@ -32,6 +32,7 @@
   <img src="https://img.shields.io/badge/tests-200%2B%20passing-brightgreen?logo=pytest" alt="Tests">
   <img src="https://img.shields.io/badge/python-3.8+-3776AB?logo=python&logoColor=white" alt="Python 3.8+">
   <img src="https://img.shields.io/badge/marketplace-Claude%20Code-6366F1" alt="Claude Code Marketplace">
+  <a href="https://github.com/grandcamel/Assistant-Skills/pkgs/container/assistant-skills"><img src="https://img.shields.io/badge/docker-ghcr.io-2496ED?logo=docker&logoColor=white" alt="Docker"></a>
   <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License">
 </p>
 
@@ -137,6 +138,33 @@ After setup, use `claude-as` instead of `claude` to run with dependencies:
 ```bash
 claude-as  # Runs Claude with Assistant Skills venv
 ```
+
+### Alternative: Docker
+
+Run Claude Code with Assistant Skills in a container—no local Python setup required:
+
+```bash
+# Using the helper script
+./scripts/claude-as-docker.sh
+
+# Or directly with Docker
+docker run -it --rm \
+  -e ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY \
+  -v $(pwd):/workspace \
+  -v ~/.claude:/home/claude/.claude \
+  ghcr.io/grandcamel/assistant-skills:latest
+```
+
+Install additional plugins or marketplaces:
+```bash
+# Install extra plugins
+CLAUDE_PLUGINS="owner/plugin1,owner/plugin2" ./scripts/claude-as-docker.sh
+
+# Install from multiple marketplaces
+CLAUDE_MARKETPLACES="grandcamel/Assistant-Skills,other/marketplace" ./scripts/claude-as-docker.sh
+```
+
+See [Docker Usage](#docker-usage) for more options.
 
 ### 3. Create Your First Project
 
@@ -439,12 +467,75 @@ Assistant-Skills/
 │   └── e2e-testing/          # E2E test infrastructure
 ├── hooks/                    # Plugin hooks
 │   └── hooks.json            # SessionStart health checks
-├── docker/                   # Docker test infrastructure
+├── docker/                   # Docker infrastructure
+│   ├── runtime/              # Claude Code runtime image
+│   └── e2e/                  # E2E test image
+├── .github/workflows/        # GitHub Actions
+│   └── docker-publish.yml    # Publish image on release
 ├── 00-project-lifecycle/     # Templates
 ├── 01-project-scaffolding/
 ├── ...
 ├── requirements.txt          # Python dependencies
 └── README.md
+```
+
+---
+
+## Docker Usage
+
+Run Claude Code with Assistant Skills in a Docker container. No local Python or Node.js installation required.
+
+### Quick Start
+
+```bash
+# Pull and run (API key authentication)
+export ANTHROPIC_API_KEY=sk-ant-...
+./scripts/claude-as-docker.sh
+
+# Or use OAuth (mount existing credentials)
+./scripts/claude-as-docker.sh --oauth
+```
+
+### Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `ANTHROPIC_API_KEY` | API key for Claude authentication |
+| `CLAUDE_PLUGINS` | Comma-separated plugin repos (`owner/repo` or full URLs) |
+| `CLAUDE_MARKETPLACES` | Comma-separated marketplace repos |
+| `CLAUDE_REFRESH_PLUGINS` | Set to `false` to skip plugin updates (default: `true`) |
+
+### Examples
+
+```bash
+# Run with a prompt
+./scripts/claude-as-docker.sh -- -p "Help me refactor this code"
+
+# Install additional plugins
+CLAUDE_PLUGINS="myorg/my-plugin,other/plugin" ./scripts/claude-as-docker.sh
+
+# Use multiple marketplaces
+CLAUDE_MARKETPLACES="grandcamel/Assistant-Skills,company/internal-skills" \
+  ./scripts/claude-as-docker.sh
+
+# Skip plugin updates for faster startup
+./scripts/claude-as-docker.sh --no-refresh
+
+# Start a shell for debugging
+./scripts/claude-as-docker.sh --shell
+
+# Pull latest image before running
+./scripts/claude-as-docker.sh --pull
+```
+
+### Building Locally
+
+```bash
+# Build the image
+docker build -t assistant-skills -f docker/runtime/Dockerfile .
+
+# Run with custom image
+./scripts/claude-as-docker.sh --image assistant-skills
 ```
 
 ---
