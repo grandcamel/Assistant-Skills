@@ -198,8 +198,13 @@ main() {
     log_success "Setup complete!"
     echo ""
 
-    # Execute the command (default: claude)
-    exec "$@"
+    # Execute the command
+    # If first arg starts with - or is empty, prepend 'claude'
+    if [ $# -eq 0 ] || [ "${1#-}" != "$1" ]; then
+        exec claude "$@"
+    else
+        exec "$@"
+    fi
 }
 
 main "$@"
