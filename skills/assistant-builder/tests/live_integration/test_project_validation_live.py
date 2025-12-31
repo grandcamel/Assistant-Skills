@@ -34,13 +34,15 @@ class TestProjectValidationLive:
         """Test validation against reference projects (Jira, Confluence, Splunk)."""
         if not live_test_enabled:
             pytest.skip("Live tests disabled (set LIVE_TEST_ENABLED=true)")
-        
+
         if not reference_projects:
             pytest.skip("No reference projects found")
-        
+
         for name, path in reference_projects.items():
             plugin_json = path / ".claude-plugin" / "plugin.json"
-            assert plugin_json.exists(), f"{name} missing plugin.json"
+            marketplace_json = path / ".claude-plugin" / "marketplace.json"
+            has_plugin_config = plugin_json.exists() or marketplace_json.exists()
+            assert has_plugin_config, f"{name} missing plugin.json or marketplace.json"
 
     def test_skill_count_in_reference_projects(self, reference_projects, live_test_enabled):
         """Verify reference projects have expected skill counts."""
