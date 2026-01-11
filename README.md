@@ -341,6 +341,41 @@ Comprehensive templates derived from production implementations:
 | `templates/05-documentation/` | Workflow guides, reference docs, examples |
 | `templates/06-git-and-ci/` | Commit conventions, GitHub Actions, releases |
 
+### Template Workflow
+
+Build a complete project in 8 phases:
+
+| Phase | Templates | Deliverable |
+|-------|-----------|-------------|
+| 1. Research | `00-project-lifecycle/01-api-research-prompt.md` | API capabilities documented |
+| 2. Architecture | `00-project-lifecycle/03-architecture-prompt.md` | Skill boundaries defined |
+| 3. Scaffolding | `01-project-scaffolding/project-init-prompt.md` | Project structure created |
+| 4. Shared Library | `02-shared-library/shared-lib-prompt.md` | HTTP client, error handling |
+| 5. Skills | `03-skill-templates/skill-creation-prompt.md` | Each skill implemented |
+| 6. Testing | `04-testing/tdd-workflow-prompt.md` | Tests with 80%+ coverage |
+| 7. Documentation | `05-documentation/WORKFLOWS.md.template` | User guides |
+| 8. CI/CD | `06-git-and-ci/github-workflows/` | GitHub Actions configured |
+
+### Template Placeholders
+
+All templates use `{{PLACEHOLDER}}` syntax:
+
+| Placeholder | Example |
+|-------------|---------|
+| `{{API_NAME}}` | `GitHub`, `Stripe`, `JIRA` |
+| `{{TOPIC}}` | `github`, `stripe`, `jira` |
+| `{{SKILL_NAME}}` | `issues`, `payments`, `search` |
+| `{{BASE_URL}}` | `https://api.github.com` |
+
+### Project Completion Checklist
+
+Before shipping:
+- [ ] API research and GAP analysis complete
+- [ ] All skills implemented with SKILL.md files
+- [ ] Unit tests with 80%+ coverage
+- [ ] Router skill routes to all skills
+- [ ] CI/CD configured with GitHub Actions
+
 ---
 
 ## Shared Library
