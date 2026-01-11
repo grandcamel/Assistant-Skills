@@ -162,7 +162,6 @@ echo ""
 
 docker run --rm \
     -v "${PROJECT_ROOT}/test-results:/app/test-results" \
-    -e PYTHONPATH="/app/skills/shared/scripts/lib:/app/.claude/skills/shared/scripts/lib" \
     -e PYTEST_ADDOPTS="--color=yes" \
     "${IMAGE_NAME}" \
     ${PYTEST_CMD} ${PYTEST_ARGS}

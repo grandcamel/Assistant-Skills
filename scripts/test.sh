@@ -64,9 +64,7 @@ print_usage() {
 run_local_tests() {
     echo -e "${BLUE}[INFO]${NC} Running unit tests locally..."
     cd "$PROJECT_ROOT"
-    
-    export PYTHONPATH="${PROJECT_ROOT}/skills/shared/scripts/lib:${PROJECT_ROOT}/.claude/skills/shared/scripts/lib"
-    
+
     pytest skills/assistant-builder/tests/ -v --tb=short "$@"
 }
 

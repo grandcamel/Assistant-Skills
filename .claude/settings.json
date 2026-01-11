@@ -1,5 +1,4 @@
 {
-  "$schema": "./skills/shared/config/config.schema.json",
   "assistant-builder": {
     "template_dir": "../",
     "reference_projects": {

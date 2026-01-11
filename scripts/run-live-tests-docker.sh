@@ -291,7 +291,6 @@ echo ""
 # Build docker run command with environment variables
 docker run --rm \
     -v "${PROJECT_ROOT}/test-results:/app/test-results" \
-    -e PYTHONPATH="/app/skills/shared/scripts/lib:/app/.claude/skills/shared/scripts/lib" \
     -e PYTEST_ADDOPTS="--color=yes" \
     -e LIVE_TEST_ENABLED="${LIVE_TEST_ENABLED:-true}" \
     -e JIRA_URL="${JIRA_URL:-}" \

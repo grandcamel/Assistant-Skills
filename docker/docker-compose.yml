@@ -131,7 +131,6 @@ services:
         --cov=skills
         --cov-report=xml:/app/test-results/coverage.xml
         --cov-report=html:/app/test-results/htmlcov
-        --ignore=skills/shared
 
   # Quick smoke tests
   smoke-tests:

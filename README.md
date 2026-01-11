@@ -399,7 +399,7 @@ Templates derived from production implementations:
 ```bash
 pip install -r requirements.txt
 
-# Run all skill tests (221 tests)
+# Run all skill tests (248 tests)
 pytest skills/*/tests/ -v
 
 # Run specific skill tests
