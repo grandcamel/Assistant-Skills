@@ -1,0 +1,362 @@
+#!/usr/bin/env python3
+"""
+Bulk Operations Script Template
+
+Provides patterns for safe bulk operations with:
+- --dry-run: Preview without executing
+- --batch-size: Control rate limiting
+- --enable-checkpoint: Save progress for resume
+- --resume: Continue from last checkpoint
+
+Placeholders:
+- {{SCRIPT_NAME}} - Name of the script (e.g., "bulk_update")
+- {{SCRIPT_DESCRIPTION}} - One-line description
+- {{API_ENDPOINT}} - API endpoint
+- {{RESOURCE}} - Resource name (e.g., "issue", "user")
+- {{TOPIC}} - Topic prefix
+"""
+
+# =============================================================================
+# TEMPLATE: bulk_update_{{resource}}.py
+# =============================================================================
+
+#!/usr/bin/env python3
+"""
+Bulk update {{resource}}s matching criteria.
+
+Examples:
+    # Preview changes (always do this first)
+    python bulk_update_{{resource}}.py --query "status=active" --set-field priority=high --dry-run
+
+    # Execute with small batches
+    python bulk_update_{{resource}}.py --query "status=active" --set-field priority=high --batch-size 10
+
+    # Enable checkpointing for large operations
+    python bulk_update_{{resource}}.py --query "status=active" --set-field priority=high --enable-checkpoint
+
+    # Resume from last checkpoint
+    python bulk_update_{{resource}}.py --resume checkpoint_20240101_120000.json
+"""
+
+import argparse
+import json
+import sys
+import time
+from datetime import datetime
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'shared' / 'scripts' / 'lib'))
+
+from config_manager import get_client
+from error_handler import handle_errors
+from formatters import print_success, print_warning, print_error, format_table
+
+
+CHECKPOINT_DIR = Path('.checkpoints')
+
+
+def save_checkpoint(checkpoint_id: str, state: dict) -> Path:
+    """Save checkpoint for resumable operations."""
+    CHECKPOINT_DIR.mkdir(exist_ok=True)
+    checkpoint_file = CHECKPOINT_DIR / f"{checkpoint_id}.json"
+    with open(checkpoint_file, 'w') as f:
+        json.dump(state, f, indent=2, default=str)
+    return checkpoint_file
+
+
+def load_checkpoint(checkpoint_file: str) -> dict:
+    """Load checkpoint from file."""
+    with open(checkpoint_file, 'r') as f:
+        return json.load(f)
+
+
+def generate_checkpoint_id() -> str:
+    """Generate unique checkpoint ID."""
+    return f"checkpoint_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+
+
+@handle_errors
+def main():
+    parser = argparse.ArgumentParser(
+        description='Bulk update {{resource}}s',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog='''
+Examples:
+  # Always preview first
+  python bulk_update_{{resource}}.py --query "status=active" --set-field priority=high --dry-run
+
+  # Execute with rate limiting
+  python bulk_update_{{resource}}.py --query "status=active" --set-field priority=high --batch-size 10
+
+  # Enable checkpointing for large operations
+  python bulk_update_{{resource}}.py --query "status=active" --set-field priority=high --enable-checkpoint
+
+  # Resume interrupted operation
+  python bulk_update_{{resource}}.py --resume .checkpoints/checkpoint_20240101_120000.json
+'''
+    )
+
+    # Query options
+    parser.add_argument('--query', '-q', help='Query to find {{resource}}s to update')
+    parser.add_argument('--ids', nargs='+', help='Specific {{resource}} IDs to update')
+
+    # Update options
+    parser.add_argument('--set-field', '-s', action='append', dest='fields',
+                        metavar='FIELD=VALUE', help='Field to update (can be repeated)')
+
+    # Safety options
+    parser.add_argument('--dry-run', action='store_true',
+                        help='Preview changes without executing')
+    parser.add_argument('--batch-size', type=int, default=50,
+                        help='Number of items per batch (default: 50)')
+    parser.add_argument('--batch-delay', type=float, default=1.0,
+                        help='Delay between batches in seconds (default: 1.0)')
+    parser.add_argument('--confirm', action='store_true',
+                        help='Skip confirmation prompt')
+
+    # Checkpoint options
+    parser.add_argument('--enable-checkpoint', action='store_true',
+                        help='Save progress for resume capability')
+    parser.add_argument('--resume', metavar='CHECKPOINT_FILE',
+                        help='Resume from checkpoint file')
+
+    # Output options
+    parser.add_argument('--profile', '-p', help='Configuration profile')
+    parser.add_argument('--output', '-o', choices=['text', 'json'], default='text')
+
+    args = parser.parse_args()
+
+    # Validate arguments
+    if args.resume:
+        # Resume mode
+        checkpoint = load_checkpoint(args.resume)
+        args.query = checkpoint.get('query')
+        args.ids = checkpoint.get('remaining_ids')
+        args.fields = checkpoint.get('fields')
+        print_warning(f"Resuming from checkpoint: {len(args.ids)} items remaining")
+    elif not args.query and not args.ids:
+        parser.error('Either --query or --ids is required')
+    elif not args.fields:
+        parser.error('At least one --set-field is required')
+
+    # Parse field updates
+    updates = {}
+    for field_spec in args.fields:
+        if '=' not in field_spec:
+            parser.error(f"Invalid field format: {field_spec} (expected FIELD=VALUE)")
+        key, value = field_spec.split('=', 1)
+        updates[key] = value
+
+    # Get client
+    client = get_client(profile=args.profile)
+
+    # Find items to update
+    if args.ids:
+        items = [{'id': id} for id in args.ids]
+    else:
+        items = list(client.paginate('{{API_ENDPOINT}}', params={'query': args.query}))
+
+    total = len(items)
+    if total == 0:
+        print_warning('No {{resource}}s found matching criteria')
+        return
+
+    # Show summary
+    print(f"\nFound {total} {{resource}}(s) to update")
+    print(f"Updates: {updates}")
+    print(f"Batch size: {args.batch_size}")
+
+    # Dry run mode
+    if args.dry_run:
+        print_warning("\n[DRY RUN] Preview of changes:")
+        preview = items[:10]
+        for item in preview:
+            print(f"  Would update: {item.get('id')} - {item.get('name', 'N/A')}")
+        if total > 10:
+            print(f"  ... and {total - 10} more")
+        print_warning(f"\n[DRY RUN] Would update {total} {{resource}}(s)")
+        print("Run without --dry-run to execute")
+        return
+
+    # Confirm unless --confirm flag
+    if not args.confirm:
+        confirm = input(f"\nUpdate {total} {{resource}}(s)? [y/N]: ")
+        if confirm.lower() != 'y':
+            print('Cancelled')
+            return
+
+    # Process in batches
+    checkpoint_id = generate_checkpoint_id() if args.enable_checkpoint else None
+    success_count = 0
+    error_count = 0
+    errors = []
+
+    for i in range(0, total, args.batch_size):
+        batch = items[i:i + args.batch_size]
+        batch_num = (i // args.batch_size) + 1
+        total_batches = (total + args.batch_size - 1) // args.batch_size
+
+        print(f"\nProcessing batch {batch_num}/{total_batches} ({len(batch)} items)")
+
+        for item in batch:
+            item_id = item.get('id')
+            try:
+                client.put(f'{{API_ENDPOINT}}/{item_id}', json_data=updates)
+                success_count += 1
+            except Exception as e:
+                error_count += 1
+                errors.append({'id': item_id, 'error': str(e)})
+                print_error(f"  Failed: {item_id} - {e}")
+
+        # Save checkpoint after each batch
+        if args.enable_checkpoint:
+            remaining_ids = [item.get('id') for item in items[i + args.batch_size:]]
+            checkpoint_state = {
+                'query': args.query,
+                'fields': args.fields,
+                'remaining_ids': remaining_ids,
+                'success_count': success_count,
+                'error_count': error_count,
+                'errors': errors,
+                'timestamp': datetime.now().isoformat()
+            }
+            checkpoint_file = save_checkpoint(checkpoint_id, checkpoint_state)
+            print(f"  Checkpoint saved: {checkpoint_file}")
+
+        # Rate limit delay between batches
+        if i + args.batch_size < total:
+            print(f"  Waiting {args.batch_delay}s before next batch...")
+            time.sleep(args.batch_delay)
+
+    # Summary
+    print(f"\n{'=' * 50}")
+    print(f"Bulk update complete")
+    print(f"  Success: {success_count}")
+    print(f"  Errors:  {error_count}")
+
+    if errors:
+        print_warning(f"\nFailed items:")
+        for err in errors[:10]:
+            print(f"  {err['id']}: {err['error']}")
+        if len(errors) > 10:
+            print(f"  ... and {len(errors) - 10} more errors")
+
+    # Clean up checkpoint on success
+    if args.enable_checkpoint and error_count == 0:
+        checkpoint_file = CHECKPOINT_DIR / f"{checkpoint_id}.json"
+        if checkpoint_file.exists():
+            checkpoint_file.unlink()
+            print(f"Checkpoint removed (operation completed successfully)")
+
+    if error_count > 0:
+        print_warning(f"\n{error_count} errors occurred. Review and retry failed items.")
+        if args.enable_checkpoint:
+            print(f"Resume with: python {sys.argv[0]} --resume {CHECKPOINT_DIR}/{checkpoint_id}.json")
+        sys.exit(1)
+
+    print_success(f"Updated {success_count} {{resource}}(s)")
+
+
+if __name__ == '__main__':
+    main()
+
+
+# =============================================================================
+# TEMPLATE: bulk_delete_{{resource}}.py
+# =============================================================================
+
+#!/usr/bin/env python3
+"""
+Bulk delete {{resource}}s matching criteria.
+
+⚠️⚠️ HIGH RISK: This permanently deletes data. Always use --dry-run first.
+
+Examples:
+    # ALWAYS preview first
+    python bulk_delete_{{resource}}.py --query "status=archived" --dry-run
+
+    # Execute with confirmation
+    python bulk_delete_{{resource}}.py --query "status=archived" --batch-size 10
+
+    # Enable checkpointing for large operations
+    python bulk_delete_{{resource}}.py --query "status=archived" --enable-checkpoint
+"""
+
+import argparse
+import json
+import sys
+import time
+from datetime import datetime
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'shared' / 'scripts' / 'lib'))
+
+from config_manager import get_client
+from error_handler import handle_errors
+from formatters import print_success, print_warning, print_error
+
+
+CHECKPOINT_DIR = Path('.checkpoints')
+
+
+@handle_errors
+def main():
+    parser = argparse.ArgumentParser(
+        description='Bulk delete {{resource}}s (HIGH RISK)',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog='''
+⚠️⚠️ HIGH RISK: This permanently deletes data.
+
+Examples:
+  # ALWAYS preview first
+  python bulk_delete_{{resource}}.py --query "status=archived" --dry-run
+
+  # Execute deletion
+  python bulk_delete_{{resource}}.py --query "status=archived" --batch-size 10 --confirm
+'''
+    )
+
+    # Query options
+    parser.add_argument('--query', '-q', help='Query to find {{resource}}s to delete')
+    parser.add_argument('--ids', nargs='+', help='Specific {{resource}} IDs to delete')
+
+    # Safety options (required for bulk delete)
+    parser.add_argument('--dry-run', action='store_true',
+                        help='Preview deletions without executing (RECOMMENDED FIRST)')
+    parser.add_argument('--batch-size', type=int, default=25,
+                        help='Number of items per batch (default: 25)')
+    parser.add_argument('--batch-delay', type=float, default=2.0,
+                        help='Delay between batches in seconds (default: 2.0)')
+    parser.add_argument('--confirm', action='store_true',
+                        help='Confirm deletion (required for execution)')
+
+    # Checkpoint options
+    parser.add_argument('--enable-checkpoint', action='store_true',
+                        help='Save progress for resume capability')
+    parser.add_argument('--resume', metavar='CHECKPOINT_FILE',
+                        help='Resume from checkpoint file')
+
+    # Output options
+    parser.add_argument('--profile', '-p', help='Configuration profile')
+
+    args = parser.parse_args()
+
+    # Require either dry-run or explicit confirm
+    if not args.dry_run and not args.confirm:
+        print_error("⚠️⚠️ HIGH RISK OPERATION")
+        print_error("You must use --dry-run to preview OR --confirm to execute")
+        print("\nRecommended workflow:")
+        print("  1. python bulk_delete_{{resource}}.py --query '...' --dry-run")
+        print("  2. Review the preview carefully")
+        print("  3. python bulk_delete_{{resource}}.py --query '...' --confirm")
+        sys.exit(1)
+
+    # Rest of implementation similar to bulk_update...
+    # (See bulk_update template for full checkpoint/batch logic)
+
+    print_warning("⚠️⚠️ Bulk delete implementation follows same pattern as bulk_update")
+    print("See bulk_update template for full implementation")
+
+
+if __name__ == '__main__':
+    main()
