@@ -202,52 +202,7 @@ git add . && git commit -m "feat(testing): add E2E test infrastructure"
 
 ## Test Prompt Best Practices
 
-Well-designed test prompts complete in fewer turns and produce consistent results.
-
-### Avoid Exploration Triggers
-
-Prompts that trigger file exploration can exhaust turns before producing output:
-
-```yaml
-# BAD - May cause Claude to read files for multiple turns
-prompt: "What templates are available for this project?"
-prompt: "Analyze the shared library structure"
-prompt: "What are the main dependencies?"
-
-# GOOD - Direct questions that don't require file exploration
-prompt: "Without reading files, what templates are typically used for Assistant Skills projects?"
-prompt: "Without reading files, describe typical Python package dependencies for plugins."
-prompt: "Briefly explain what a landing-page skill typically does."
-```
-
-### Use Flexible Expectations
-
-Test validation should be lenient to handle Claude's varied responses:
-
-```yaml
-# BAD - Exact match is fragile
-expect:
-  output_contains:
-    - "assistant-skills-lib"
-
-# GOOD - Any of these terms indicates success
-expect:
-  output_contains_any:
-    - "skill"
-    - "plugin"
-    - "SKILL"
-    - "claude"
-  no_crashes: true  # More lenient than no_errors
-```
-
-### Prompt Design Patterns
-
-| Pattern | Example | Purpose |
-|---------|---------|---------|
-| Prefix constraint | "Without reading files, ..." | Prevents file exploration |
-| Direct question | "What is X?" vs "Analyze X" | Faster response |
-| Conceptual focus | "What does X typically do?" | Avoids project-specific exploration |
-| Flexible terms | Multiple synonyms in `output_contains_any` | Handles response variation |
+See `docs/test-prompt-best-practices.md` for patterns on designing prompts that complete in fewer turns.
 
 ## Customizing Tests
 
@@ -335,55 +290,8 @@ grep -A 50 "test_my_feature" test-results/e2e/responses_latest.log
 
 ## Troubleshooting
 
-### No authentication configured
-```bash
-# Option 1: API Key
-export ANTHROPIC_API_KEY="sk-ant-..."
-
-# Option 2: OAuth (creates ~/.claude.json)
-claude auth login
-```
-
-### Tests timing out
-```bash
-E2E_TEST_TIMEOUT=300 ./scripts/run-e2e-tests.sh
-```
-
-### Docker permission denied
-```bash
-sudo usermod -aG docker $USER
-# Then log out and back in
-```
-
-### Tests showing "Reached max turns"
-This usually means prompts are triggering file exploration. Fix by:
-1. Redesigning prompts (see Test Prompt Best Practices above)
-2. Increasing turn limit for complex tests:
-```bash
-E2E_MAX_TURNS=10 ./scripts/run-e2e-tests.sh
-```
-
-### Tests fail with "cannot use with root privileges"
-The Docker container runs as non-root user (`testuser`) to support `--dangerously-skip-permissions`. If you encounter permission issues with mounted volumes, check ownership settings in docker-compose.yml.
-
-### Docker volume permission errors
-If you see "Operation not permitted" errors on `.claude` directory:
-```bash
-# Remove stale Docker volume and rebuild
-docker volume rm e2e_claude-data
-docker compose -f docker/e2e/docker-compose.yml build --no-cache e2e-tests
-```
-
-### Tests skip with "E2E tests disabled"
-Ensure API key is passed to the container:
-```bash
-# Verify key is set
-echo "Key length: ${#ANTHROPIC_API_KEY}"
-
-# Run with explicit key passing
-docker run --rm --entrypoint bash \
-  -e "ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY" \
-  -w /workspace/plugin-source \
-  e2e_e2e-tests \
-  -c 'python -m pytest tests/e2e/ -v'
-```
+See `docs/troubleshooting.md` for common issues:
+- Authentication setup (API key vs OAuth)
+- Test timeouts and max turns
+- Docker permission issues
+- Volume errors

@@ -102,25 +102,7 @@ docker build -t assistant-skills -f docker/runtime/Dockerfile .
 ./scripts/run-e2e-tests.sh --verbose
 ```
 
-E2E tests support two authentication methods:
-- **Local runs (`--local`)**: Prefers Claude OAuth credentials (`~/.claude.json`). Run `claude auth login` to authenticate.
-- **Docker runs**: Requires `ANTHROPIC_API_KEY` environment variable.
-
-Configuration:
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `E2E_TEST_TIMEOUT` | 120 | Timeout per test (seconds) |
-| `E2E_TEST_MODEL` | claude-sonnet-4-20250514 | Claude model |
-| `E2E_MAX_TURNS` | 5 | Max conversation turns per test |
-
-Per-test overrides in `test_cases.yaml`:
-```yaml
-- name: "Complex test"
-  prompt: "Do something complex"
-  max_turns: 10      # Override default
-  timeout: 180       # Override default
-  expected_patterns: ["success"]
-```
+Authentication: Local runs prefer OAuth (`~/.claude.json`), Docker runs require `ANTHROPIC_API_KEY`. See `skills/e2e-testing/SKILL.md` for configuration options.
 
 ## Architecture
 
@@ -248,30 +230,6 @@ feat(scope): implement feature (N/N tests passing)
 
 Types: `feat`, `fix`, `docs`, `test`, `refactor`, `style`, `perf`, `build`, `ci`, `chore`
 
-## Phase 2: CLI Entry Points
-
-This project serves as the foundation for Phase 2 refactoring across Assistant-Skills projects. The `test_entrypoint/` package validates that pip-installed CLI entry points work in the Claude Code sandbox.
-
-### Sandbox Compatibility Test
-
-```bash
-# Install and test entry point
-cd test_entrypoint && pip install -e .
-which test-claude-ep          # Check PATH discovery
-test-claude-ep --test-arg     # Direct invocation
-python -m test_entrypoint     # Module invocation
-```
-
-Results documented in `SANDBOX_TEST_RESULTS.md`. All three invocation methods work successfully.
-
-### Phase 2 Documentation
-
-| File | Purpose |
-|------|---------|
-| `SANDBOX_TEST_RESULTS.md` | Entry point compatibility test results |
-| `REFACTORING_INSTRUCTIONS.md` | Phase 2 tasks for this project |
-| `PHASE2_FEEDBACK*.md` | Engineering review of Phase 2 proposals |
-
 ## Template Folders
 
 - `templates/00-project-lifecycle/` - API research, GAP analysis, architecture
@@ -281,35 +239,14 @@ Results documented in `SANDBOX_TEST_RESULTS.md`. All three invocation methods wo
 - `templates/04-testing/` - TDD workflow, pytest patterns, sandboxed profiles
 - `templates/05-documentation/` - Workflow guides, parallel subagents
 - `templates/06-git-and-ci/` - Commit conventions, GitHub Actions
-- `prompts/` - Reusable prompts for integrating setup in other projects
-- `scripts/` - Utility scripts (sync-version.sh)
 
-## Bulk Operations
+## Additional Patterns
 
-For high-risk bulk operations, use the patterns in `templates/03-skill-templates/BULK-OPERATIONS.md`:
-
-```bash
-# Always preview first
-python bulk_update.py --query "status=active" --dry-run
-
-# Execute with batching and checkpoints
-python bulk_update.py --query "status=active" --batch-size 10 --enable-checkpoint
-
-# Resume interrupted operation
-python bulk_update.py --resume .checkpoints/checkpoint_20240101.json
-```
-
-Key flags: `--dry-run`, `--batch-size`, `--enable-checkpoint`, `--resume`
-
-## Sandboxed Testing
-
-For safe demos and training, use sandbox profiles from `templates/04-testing/SANDBOXED-PROFILES.md`:
-
-```bash
-export SANDBOX_PROFILE=read-only  # Safe demos
-export SANDBOX_PROFILE=create-only  # Training
-export SANDBOX_PROFILE=full-access  # Production
-```
+| Pattern | Template | Key Flags/Options |
+|---------|----------|-------------------|
+| Bulk Operations | `templates/03-skill-templates/BULK-OPERATIONS.md` | `--dry-run`, `--batch-size`, `--enable-checkpoint`, `--resume` |
+| Sandboxed Testing | `templates/04-testing/SANDBOXED-PROFILES.md` | `SANDBOX_PROFILE=read-only\|create-only\|full-access` |
+| Parallel Subagents | `templates/05-documentation/PARALLEL_SUBAGENTS.md` | Worktrees, file-persisted results |
 
 ## Version Management
 
