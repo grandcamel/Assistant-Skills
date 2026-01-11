@@ -63,48 +63,6 @@
 
 ---
 
-## The Difference
-
-<table>
-<tr>
-<td width="50%">
-
-### Starting from Scratch
-```
-1. Research skill structure
-2. Figure out SKILL.md format
-3. Write boilerplate code
-4. Set up test infrastructure
-5. Create documentation
-6. Debug token efficiency issues
-```
-*Hours of trial and error...*
-
-</td>
-<td width="50%">
-
-### With Assistant Skills
-```
-"Create a new GitHub Assistant Skills project
-with search and issues skills"
-```
-*Production-ready in minutes.*
-
-</td>
-</tr>
-</table>
-
-### Time Saved
-
-| Task | From Scratch | With This Toolkit | Saved |
-|------|--------------|-------------------|-------|
-| New project setup | 2-4 hours | 5 minutes | 95% |
-| Add new skill | 30-60 min | 2 minutes | 95% |
-| Optimize for tokens | 1-2 hours | 1 minute | 98% |
-| Create landing page | 2-3 hours | 10 minutes | 90% |
-
----
-
 ## Quick Start
 
 ### 1. Install Plugin
@@ -139,32 +97,7 @@ After setup, use `claude-as` instead of `claude` to run with dependencies:
 claude-as  # Runs Claude with Assistant Skills venv
 ```
 
-### Alternative: Docker
-
-Run Claude Code with Assistant Skills in a container—no local Python setup required:
-
-```bash
-# Using the helper script
-./scripts/claude-as-docker.sh
-
-# Or directly with Docker
-docker run -it --rm \
-  -e ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY \
-  -v $(pwd):/workspace \
-  -v ~/.claude:/home/claude/.claude \
-  ghcr.io/grandcamel/assistant-skills:latest
-```
-
-Install additional plugins or marketplaces:
-```bash
-# Install extra plugins
-CLAUDE_PLUGINS="owner/plugin1,owner/plugin2" ./scripts/claude-as-docker.sh
-
-# Install from multiple marketplaces
-CLAUDE_MARKETPLACES="grandcamel/Assistant-Skills,other/marketplace" ./scripts/claude-as-docker.sh
-```
-
-See [Docker Usage](#docker-usage) for more options.
+**Alternative**: Run in Docker instead—see [Docker Usage](#docker-usage).
 
 ### 3. Create Your First Project
 
