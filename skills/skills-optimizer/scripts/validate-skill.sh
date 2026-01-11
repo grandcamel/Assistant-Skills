@@ -31,19 +31,19 @@ INFO=0
 
 log_error() {
   echo "[ERROR] $1"
-  ((ERRORS++))
+  ERRORS=$((ERRORS + 1))
 }
 
 log_warning() {
   echo "[WARN]  $1"
-  ((WARNINGS++))
+  WARNINGS=$((WARNINGS + 1))
 }
 
 log_info() {
   if [ "$VERBOSE" = "true" ]; then
     echo "[INFO]  $1"
   fi
-  ((INFO++))
+  INFO=$((INFO + 1))
 }
 
 log_pass() {
@@ -168,11 +168,99 @@ else
 fi
 
 # H005: Voodoo constants
-VOODOO=$(grep -ciE "what is (json|api|rest|http|git|npm|yaml|pdf|csv)|javascript object notation|application programming interface" "$SKILL_MD" 2>/dev/null || echo "0")
+VOODOO=$(grep -ciE "what is (json|api|rest|http|git|npm|yaml|pdf|csv)|javascript object notation|application programming interface" "$SKILL_MD" 2>/dev/null | head -1 || echo "0")
+if [ -z "$VOODOO" ]; then VOODOO=0; fi
 if [ "$VOODOO" -eq 0 ]; then
   log_pass "H005: No voodoo constants detected"
 else
   log_warning "H005: Found $VOODOO potential voodoo constant(s)"
+fi
+
+# ===========================================
+# ROUTER SKILL CHECKS (R001-R005)
+# ===========================================
+
+# Detect if this is a router/hub skill
+IS_ROUTER=false
+if grep -qiE "hub|router|routes to.*skills|routing|specialized skills" "$SKILL_MD"; then
+  IS_ROUTER=true
+  log_info "Detected router/hub skill - running router checks"
+fi
+
+if [ "$IS_ROUTER" = true ]; then
+  # R001: Quick Reference table with Risk column
+  if grep -qE "\| Risk \||\|:---*:\|" "$SKILL_MD" && grep -q "I want to" "$SKILL_MD"; then
+    log_pass "R001: Quick Reference table with Risk column present"
+  else
+    log_warning "R001: Router missing Quick Reference table with Risk levels"
+  fi
+
+  # R002: Risk legend
+  if grep -qiE "risk legend|read-only.*safe.*destructive|⚠️.*high-risk" "$SKILL_MD"; then
+    log_pass "R002: Risk legend present"
+  else
+    log_warning "R002: Router missing Risk Legend (add: **Risk Legend**: - Read-only | ⚠️ Destructive | ⚠️⚠️ High-risk)"
+  fi
+
+  # R003: Negative triggers table
+  if grep -qiE "negative trigger|does not handle|route to instead" "$SKILL_MD"; then
+    log_pass "R003: Negative triggers documented"
+  else
+    log_warning "R003: Router missing Negative Triggers section"
+  fi
+
+  # R004: Disambiguation examples
+  if grep -qiE "disambiguation|could mean|clarif|ask:.*\"" "$SKILL_MD"; then
+    log_pass "R004: Disambiguation examples present"
+  else
+    log_warning "R004: Router missing disambiguation examples"
+  fi
+
+  # R005: Context awareness
+  if grep -qiE "pronoun|context|\"it\"|\"that\"|\"them\"" "$SKILL_MD"; then
+    log_pass "R005: Context awareness documented"
+  else
+    log_info "R005: Consider documenting context awareness (pronoun resolution)"
+  fi
+fi
+
+# ===========================================
+# RISK LEVEL CHECKS (K001-K003) - For all skills with scripts
+# ===========================================
+
+# K001: Destructive scripts have risk indicators
+if [ -d "$SKILL_PATH/scripts" ]; then
+  HAS_DESTRUCTIVE=$(ls "$SKILL_PATH/scripts/" 2>/dev/null | grep -ciE "delete|remove|bulk|purge" || echo "0")
+  if [ "$HAS_DESTRUCTIVE" -gt 0 ]; then
+    if grep -q "⚠️" "$SKILL_MD"; then
+      log_pass "K001: Risk indicators present for destructive operations"
+    else
+      log_warning "K001: Destructive scripts found but no risk indicators (⚠️) in SKILL.md"
+    fi
+  else
+    log_pass "K001: No destructive scripts detected"
+  fi
+
+  # K002: Bulk operations marked as high-risk
+  HAS_BULK=$(ls "$SKILL_PATH/scripts/" 2>/dev/null | grep -ciE "bulk" || echo "0")
+  if [ "$HAS_BULK" -gt 0 ]; then
+    if grep -q "⚠️⚠️" "$SKILL_MD"; then
+      log_pass "K002: Bulk operations marked as high-risk (⚠️⚠️)"
+    else
+      log_warning "K002: Bulk scripts found but not marked as high-risk (⚠️⚠️)"
+    fi
+  else
+    log_pass "K002: No bulk operations detected"
+  fi
+
+  # K003: Dry-run mentioned for high-risk operations
+  if grep -q "⚠️⚠️" "$SKILL_MD"; then
+    if grep -qiE "dry.run|--dry-run|preview" "$SKILL_MD"; then
+      log_pass "K003: Dry-run documented for high-risk operations"
+    else
+      log_warning "K003: High-risk operations should document --dry-run option"
+    fi
+  fi
 fi
 
 # ===========================================

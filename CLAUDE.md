@@ -202,6 +202,42 @@ Brief intro (1-2 sentences).
 
 Note: The `when_to_use` field is deprecated. Include trigger phrases directly in `description`.
 
+### Router/Hub Skills
+
+For projects with multiple specialized skills, create a router skill that routes requests to the appropriate skill. See `templates/03-skill-templates/router-skill/` for templates.
+
+**Key components**:
+- Quick Reference table with risk levels
+- Keyword-based routing rules
+- Negative triggers (what each skill does NOT handle)
+- Disambiguation examples for ambiguous requests
+- Context awareness (pronoun resolution, scope persistence)
+
+**Core insight**: "The LLM IS the Router" - SKILL.md provides instructions for Claude, not configuration for code.
+
+Example Quick Reference:
+```markdown
+| I want to... | Use this skill | Risk |
+|--------------|----------------|:----:|
+| Search with queries | topic-search | - |
+| Create a single item | topic-issue | ⚠️ |
+| Update 10+ items | topic-bulk | ⚠️⚠️ |
+```
+
+### Risk-Level Marking
+
+Mark operations by risk in skill documentation:
+
+| Risk | Meaning | Operations | Safeguards |
+|:----:|---------|------------|------------|
+| `-` | Safe | search, list, get, export | None |
+| `⚠️` | Destructive | create, update, delete (single) | Confirm |
+| `⚠️⚠️` | High-risk | bulk ops, admin changes | Confirm + dry-run |
+
+Always include the legend: `**Risk Legend**: - Read-only | ⚠️ Destructive | ⚠️⚠️ High-risk`
+
+See `templates/03-skill-templates/router-skill/RISK-LEVELS.md` for implementation patterns.
+
 ### Commit Convention
 
 Use conventional commits with TDD pattern:
@@ -241,8 +277,21 @@ Results documented in `SANDBOX_TEST_RESULTS.md`. All three invocation methods wo
 - `templates/00-project-lifecycle/` - API research, GAP analysis, architecture
 - `templates/01-project-scaffolding/` - Project initialization
 - `templates/02-shared-library/` - HTTP client, error handling patterns
-- `templates/03-skill-templates/` - SKILL.md format, script templates
+- `templates/03-skill-templates/` - SKILL.md format, script templates, router skills
 - `templates/04-testing/` - TDD workflow, pytest patterns
-- `templates/05-documentation/` - Workflow guides
+- `templates/05-documentation/` - Workflow guides, parallel subagents
 - `templates/06-git-and-ci/` - Commit conventions, GitHub Actions
 - `prompts/` - Reusable prompts for integrating setup in other projects
+- `scripts/` - Utility scripts (sync-version.sh)
+
+## Version Management
+
+Single source of truth in `VERSION` file, synced across:
+- `.claude-plugin/plugin.json`
+- `.claude-plugin/marketplace.json`
+
+```bash
+./scripts/sync-version.sh --check     # Check if in sync
+./scripts/sync-version.sh             # Sync all to VERSION
+./scripts/sync-version.sh --set 2.0.0 # Set new version
+```
