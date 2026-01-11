@@ -1,0 +1,311 @@
+# Discovery Command Template
+
+Template for creating project/context discovery commands that enable intelligent defaults.
+
+## Placeholders
+
+- `{{TOPIC}}` - Topic prefix (e.g., "jira", "github", "confluence")
+- `{{API_NAME}}` - Friendly API name (e.g., "JIRA", "GitHub", "Confluence")
+- `{{RESOURCE}}` - Primary resource (e.g., "project", "repository", "space")
+
+---
+
+## Command Template
+
+```markdown
+---
+name: {{TOPIC}}-discover-{{RESOURCE}}
+description: Discover {{API_NAME}} {{RESOURCE}} context for intelligent defaults and workflow understanding
+---
+
+# {{API_NAME}} {{RESOURCE}} Discovery
+
+You are helping the user discover and configure {{API_NAME}} {{RESOURCE}} context. This context enables intelligent defaults when creating resources and understanding workflows.
+
+## What Gets Discovered
+
+- **Metadata**: Resource types, categories, tags, assignable users
+- **Workflows**: Valid status transitions, available actions
+- **Patterns**: Common values based on recent activity
+- **Defaults**: Auto-generated sensible defaults based on patterns
+
+## Step 1: Get {{RESOURCE}} Key
+
+Ask the user which {{RESOURCE}} they want to configure:
+
+"Which {{API_NAME}} {{RESOURCE}} would you like to discover context for? Please provide the {{RESOURCE}} key/ID."
+
+## Step 2: Confirm Profile
+
+Check which profile to use:
+
+"Which {{API_NAME}} profile should I use for discovery?"
+
+Options:
+1. Use the default profile (check environment or config)
+2. Specify a profile name (development, production, etc.)
+
+## Step 3: Run Discovery
+
+Run the discovery script:
+
+\`\`\`bash
+python "${CLAUDE_PLUGIN_ROOT}/skills/{{TOPIC}}-ops/scripts/discover_{{RESOURCE}}.py" {KEY} --profile {profile}
+\`\`\`
+
+## Step 4: Review Results
+
+After discovery completes, summarize what was found:
+
+\`\`\`
+Discovery complete for {KEY}!
+
+Discovered:
+- N resource types found
+- N categories/tags found
+- N active users
+
+Patterns (last 30 days):
+- Top contributors: ...
+- Common labels: ...
+- Distribution: ...
+
+Defaults generated based on patterns.
+\`\`\`
+
+## Step 5: Storage Decision
+
+Ask the user how they want to store the context:
+
+"How would you like to store this {{RESOURCE}} context?
+
+1. **Shared (Recommended)**: Save to \`.claude/{{TOPIC}}-{{RESOURCE}}-{KEY}/\`
+   - Can be committed to your repo and shared with your team
+
+2. **Personal only**: Save to \`.claude/settings.local.json\`
+   - Private to you (gitignored)
+
+3. **Both**: Shared context with personal overrides"
+
+## Step 6: Customize Defaults (Optional)
+
+Ask if they want to customize the auto-generated defaults:
+
+"Would you like to customize any defaults?
+
+For example:
+- Set a default category
+- Set a default assignee
+- Add default labels"
+
+## Step 7: Confirm Success
+
+Summarize what was created:
+
+"{{RESOURCE}} context for {KEY} is now configured!
+
+Created:
+- \`.claude/{{TOPIC}}-{{RESOURCE}}-{KEY}/context/metadata.json\`
+- \`.claude/{{TOPIC}}-{{RESOURCE}}-{KEY}/context/patterns.json\`
+- \`.claude/{{TOPIC}}-{{RESOURCE}}-{KEY}/defaults.json\`
+
+**Next steps:**
+1. Review and customize \`defaults.json\` as needed
+2. Commit the context directory to share with your team
+3. When creating resources, I'll automatically use these defaults"
+
+## Troubleshooting
+
+**"Profile not found" error:**
+- Ensure credentials are configured
+- Check environment variables
+
+**"{{RESOURCE}} not found" error:**
+- Verify the key is correct
+- Ensure you have permission to access
+
+**Empty patterns:**
+- If no recent activity, patterns will be empty
+- Try increasing the sample period
+```
+
+---
+
+## Discovery Script Template
+
+```python
+#!/usr/bin/env python3
+"""
+Discover {{RESOURCE}} context for intelligent defaults.
+
+Examples:
+    python discover_{{RESOURCE}}.py PROJECT_KEY
+    python discover_{{RESOURCE}}.py PROJECT_KEY --profile development
+    python discover_{{RESOURCE}}.py PROJECT_KEY --personal
+    python discover_{{RESOURCE}}.py PROJECT_KEY --days 60
+"""
+
+import argparse
+import json
+import sys
+from datetime import datetime, timedelta
+from pathlib import Path
+
+from config_manager import get_client
+from error_handler import handle_errors
+
+
+@handle_errors
+def main():
+    parser = argparse.ArgumentParser(description='Discover {{RESOURCE}} context')
+    parser.add_argument('key', help='{{RESOURCE}} key/ID')
+    parser.add_argument('--profile', '-p', help='Configuration profile')
+    parser.add_argument('--personal', action='store_true',
+                        help='Save to personal settings (gitignored)')
+    parser.add_argument('--days', type=int, default=30,
+                        help='Days of history to analyze (default: 30)')
+    parser.add_argument('--output', '-o', choices=['text', 'json'], default='text')
+    args = parser.parse_args()
+
+    client = get_client(profile=args.profile)
+
+    # 1. Fetch metadata
+    metadata = discover_metadata(client, args.key)
+
+    # 2. Analyze patterns
+    patterns = analyze_patterns(client, args.key, days=args.days)
+
+    # 3. Generate defaults
+    defaults = generate_defaults(metadata, patterns)
+
+    # 4. Save context
+    context_dir = save_context(args.key, metadata, patterns, defaults,
+                               personal=args.personal)
+
+    # 5. Output summary
+    if args.output == 'json':
+        print(json.dumps({
+            'metadata': metadata,
+            'patterns': patterns,
+            'defaults': defaults,
+            'context_dir': str(context_dir)
+        }, indent=2))
+    else:
+        print_summary(args.key, metadata, patterns, context_dir)
+
+
+def discover_metadata(client, key):
+    """Fetch {{RESOURCE}} metadata."""
+    # Implement API calls to fetch:
+    # - Resource types
+    # - Categories/components
+    # - Tags/labels
+    # - Users
+    # - Versions/releases
+    return {}
+
+
+def analyze_patterns(client, key, days=30):
+    """Analyze recent activity patterns."""
+    # Implement analysis of:
+    # - Most common values
+    # - Top contributors
+    # - Frequency distributions
+    return {}
+
+
+def generate_defaults(metadata, patterns):
+    """Generate sensible defaults from patterns."""
+    # Implement default generation:
+    # - Most common category as default
+    # - Top contributor as default assignee
+    # - Common labels as suggested
+    return {}
+
+
+def save_context(key, metadata, patterns, defaults, personal=False):
+    """Save context to appropriate location."""
+    if personal:
+        context_dir = Path('.claude/settings.local.json')
+        # Merge into existing settings
+    else:
+        context_dir = Path(f'.claude/{{TOPIC}}-{{RESOURCE}}-{key}')
+        context_dir.mkdir(parents=True, exist_ok=True)
+
+        (context_dir / 'metadata.json').write_text(
+            json.dumps(metadata, indent=2))
+        (context_dir / 'patterns.json').write_text(
+            json.dumps(patterns, indent=2))
+        (context_dir / 'defaults.json').write_text(
+            json.dumps(defaults, indent=2))
+
+    return context_dir
+
+
+def print_summary(key, metadata, patterns, context_dir):
+    """Print human-readable summary."""
+    print(f"\nDiscovery complete for {key}!")
+    print(f"\nContext saved to: {context_dir}")
+
+
+if __name__ == '__main__':
+    main()
+```
+
+---
+
+## Context Directory Structure
+
+```
+.claude/{{TOPIC}}-{{RESOURCE}}-{KEY}/
+├── context/
+│   ├── metadata.json      # Resource types, categories, users
+│   ├── patterns.json      # Usage patterns from analysis
+│   └── workflows.json     # Status transitions (if applicable)
+├── defaults.json          # Auto-generated + customized defaults
+└── README.md              # Context documentation
+```
+
+---
+
+## defaults.json Format
+
+```json
+{
+  "resource_type": "Bug",
+  "priority": "Medium",
+  "assignee": null,
+  "labels": ["needs-triage"],
+  "component": null,
+  "custom_fields": {}
+}
+```
+
+---
+
+## Integration with Skills
+
+Skills can load context for intelligent defaults:
+
+```python
+from pathlib import Path
+import json
+
+def load_project_context(key):
+    """Load discovered project context."""
+    context_dir = Path(f'.claude/{{TOPIC}}-{{RESOURCE}}-{key}')
+    if not context_dir.exists():
+        return None
+
+    return {
+        'metadata': json.loads((context_dir / 'context/metadata.json').read_text()),
+        'defaults': json.loads((context_dir / 'defaults.json').read_text())
+    }
+
+def get_default_value(key, field, fallback=None):
+    """Get default value for a field."""
+    context = load_project_context(key)
+    if context:
+        return context['defaults'].get(field, fallback)
+    return fallback
+```

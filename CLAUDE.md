@@ -277,12 +277,39 @@ Results documented in `SANDBOX_TEST_RESULTS.md`. All three invocation methods wo
 - `templates/00-project-lifecycle/` - API research, GAP analysis, architecture
 - `templates/01-project-scaffolding/` - Project initialization
 - `templates/02-shared-library/` - HTTP client, error handling patterns
-- `templates/03-skill-templates/` - SKILL.md format, script templates, router skills
-- `templates/04-testing/` - TDD workflow, pytest patterns
+- `templates/03-skill-templates/` - SKILL.md, scripts, router skills, bulk operations, discovery commands
+- `templates/04-testing/` - TDD workflow, pytest patterns, sandboxed profiles
 - `templates/05-documentation/` - Workflow guides, parallel subagents
 - `templates/06-git-and-ci/` - Commit conventions, GitHub Actions
 - `prompts/` - Reusable prompts for integrating setup in other projects
 - `scripts/` - Utility scripts (sync-version.sh)
+
+## Bulk Operations
+
+For high-risk bulk operations, use the patterns in `templates/03-skill-templates/BULK-OPERATIONS.md`:
+
+```bash
+# Always preview first
+python bulk_update.py --query "status=active" --dry-run
+
+# Execute with batching and checkpoints
+python bulk_update.py --query "status=active" --batch-size 10 --enable-checkpoint
+
+# Resume interrupted operation
+python bulk_update.py --resume .checkpoints/checkpoint_20240101.json
+```
+
+Key flags: `--dry-run`, `--batch-size`, `--enable-checkpoint`, `--resume`
+
+## Sandboxed Testing
+
+For safe demos and training, use sandbox profiles from `templates/04-testing/SANDBOXED-PROFILES.md`:
+
+```bash
+export SANDBOX_PROFILE=read-only  # Safe demos
+export SANDBOX_PROFILE=create-only  # Training
+export SANDBOX_PROFILE=full-access  # Production
+```
 
 ## Version Management
 
