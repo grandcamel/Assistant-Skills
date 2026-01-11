@@ -1,7 +1,7 @@
 {
   "name": "grandcamel-plugins",
   "version": "1.3.1",
-  "description": "Templates and tools for building Claude Code Assistant Skills projects. Production-ready skills for project scaffolding, optimization, and branding.",
+  "description": "Claude Code Assistant Skills marketplace. Development tools and Atlassian/Splunk integrations from production implementations.",
   "owner": {
     "name": "Jason Krueger",
     "email": "grandcamel@github.com"
@@ -23,6 +23,72 @@
         "scaffolding",
         "templates",
         "optimization"
+      ]
+    },
+    {
+      "name": "jira-assistant-skills",
+      "description": "14 JIRA skills for issue management, workflows, agile boards, and automation. Includes router skill for intelligent request routing.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Jason Krueger",
+        "url": "https://github.com/grandcamel"
+      },
+      "source": {
+        "source": "github",
+        "repo": "grandcamel/Jira-Assistant-Skills"
+      },
+      "category": "productivity",
+      "homepage": "https://github.com/grandcamel/Jira-Assistant-Skills",
+      "keywords": [
+        "jira",
+        "atlassian",
+        "issues",
+        "agile",
+        "workflows"
+      ]
+    },
+    {
+      "name": "confluence-assistant-skills",
+      "description": "14 Confluence skills for content management, page creation, space administration, and collaboration.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Jason Krueger",
+        "url": "https://github.com/grandcamel"
+      },
+      "source": {
+        "source": "github",
+        "repo": "grandcamel/Confluence-Assistant-Skills"
+      },
+      "category": "productivity",
+      "homepage": "https://github.com/grandcamel/Confluence-Assistant-Skills",
+      "keywords": [
+        "confluence",
+        "atlassian",
+        "wiki",
+        "documentation",
+        "collaboration"
+      ]
+    },
+    {
+      "name": "splunk-assistant-skills",
+      "description": "13 Splunk skills for log analysis, search queries, dashboards, and monitoring automation.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Jason Krueger",
+        "url": "https://github.com/grandcamel"
+      },
+      "source": {
+        "source": "github",
+        "repo": "grandcamel/Splunk-Assistant-Skills"
+      },
+      "category": "productivity",
+      "homepage": "https://github.com/grandcamel/Splunk-Assistant-Skills",
+      "keywords": [
+        "splunk",
+        "logging",
+        "monitoring",
+        "spl",
+        "observability"
       ]
     }
   ]
