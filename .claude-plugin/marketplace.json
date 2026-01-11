@@ -1,6 +1,6 @@
 {
   "name": "grandcamel-plugins",
-  "version": "1.0.0",
+  "version": "1.3.1",
   "description": "Templates and tools for building Claude Code Assistant Skills projects. Production-ready skills for project scaffolding, optimization, and branding.",
   "owner": {
     "name": "Jason Krueger",
@@ -10,7 +10,7 @@
     {
       "name": "assistant-skills",
       "description": "Complete toolkit for building Claude Code skills. Includes project scaffolding wizard, skill optimizer, and landing page generator. Derived from 40+ production skill implementations.",
-      "version": "1.2.0",
+      "version": "1.3.1",
       "author": {
         "name": "Jason Krueger",
         "url": "https://github.com/grandcamel"
@@ -18,7 +18,12 @@
       "source": "./",
       "category": "development",
       "homepage": "https://github.com/grandcamel/Assistant-Skills",
-      "keywords": ["skills", "scaffolding", "templates", "optimization"]
+      "keywords": [
+        "skills",
+        "scaffolding",
+        "templates",
+        "optimization"
+      ]
     }
   ]
 }

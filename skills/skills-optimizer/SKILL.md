@@ -71,6 +71,40 @@ Audit skills for token efficiency and progressive disclosure compliance.
 
 ---
 
+## Router Skill Checks (R001-R005)
+
+Automatically detected for skills mentioning "hub", "router", or "routes to...skills":
+
+| Check | Description | Severity |
+|-------|-------------|----------|
+| R001 | Quick Reference table with Risk column | Warning |
+| R002 | Risk Legend present | Warning |
+| R003 | Negative Triggers documented | Warning |
+| R004 | Disambiguation examples | Warning |
+| R005 | Context awareness (pronoun resolution) | Info |
+
+---
+
+## Risk Level Checks (K001-K003)
+
+Applied to skills with `scripts/` directory:
+
+| Check | Description | Severity |
+|-------|-------------|----------|
+| K001 | Destructive scripts have ⚠️ indicators | Warning |
+| K002 | Bulk operations marked as ⚠️⚠️ | Warning |
+| K003 | High-risk ops document --dry-run | Warning |
+
+### Risk Level Reference
+
+| Risk | Symbol | Operations | Required Safeguards |
+|------|:------:|------------|---------------------|
+| Safe | `-` | search, list, get, export | None |
+| Destructive | `⚠️` | create, update, delete | Confirm |
+| High-risk | `⚠️⚠️` | bulk ops, admin changes | Confirm + dry-run |
+
+---
+
 ## Audit Report Format
 
 ```json
