@@ -2,8 +2,8 @@
 """
 Add a new skill to an existing Assistant Skills project.
 
-Creates the skill directory structure with SKILL.md, scripts, tests,
-and documentation following established patterns.
+Creates the skill directory structure with SKILL.md and documentation
+following the production pattern (CLI-reference style, no embedded scripts).
 
 Usage:
     python add_skill.py --name "search" --description "Search operations"
@@ -17,13 +17,14 @@ Examples:
         --name "search" \\
         --description "Search and query operations" \\
         --resource "queries" \\
-        --scripts "search,list_saved,create_saved,delete_saved"
+        --operations "list,get,create,update,delete"
 
     # Standard CRUD operations
-    python add_skill.py --name "users" --description "User management" --scripts crud
+    python add_skill.py --name "users" --description "User management" --operations crud
 """
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -35,218 +36,331 @@ from assistant_skills_lib import (
 )
 
 
-# Script presets
-SCRIPT_PRESETS = {
+# Operation presets
+OPERATION_PRESETS = {
     'crud': ['list', 'get', 'create', 'update', 'delete'],
-    'list-get': ['list', 'get'],
-    'all': ['list', 'get', 'create', 'update', 'delete', 'search', 'export']
+    'readonly': ['list', 'get', 'search'],
+    'all': ['list', 'get', 'create', 'update', 'delete', 'search', 'export', 'import']
 }
 
 
-def generate_skill_md(topic: str, skill_name: str, description: str, scripts: list) -> str:
-    """Generate SKILL.md content."""
-    scripts_table = ""
-    for script in scripts:
-        script_desc = script.replace('_', ' ').title()
-        scripts_table += f"| {script_desc} | `{script}_{skill_name}.py` | {script_desc} {skill_name} |\n"
+def detect_project_type(project_path: Path) -> dict:
+    """Detect project type and CLI tool from project structure."""
+    result = {
+        'type': 'cli-wrapper',
+        'cli_tool': None,
+        'topic': None
+    }
+
+    # Check for .claude-plugin directory (new structure)
+    plugin_json = project_path / '.claude-plugin' / 'plugin.json'
+    if plugin_json.exists():
+        try:
+            plugin = json.loads(plugin_json.read_text())
+            result['name'] = plugin.get('name', '')
+        except Exception:
+            pass
+
+    # Check for library directory (custom-library or hybrid)
+    lib_dirs = list(project_path.glob('*-assistant-skills-lib'))
+    if lib_dirs:
+        result['type'] = 'custom-library'
+
+    # Try to detect topic from skills directory
+    skills_dir = project_path / 'skills'
+    if skills_dir.exists():
+        for skill_dir in skills_dir.iterdir():
+            if skill_dir.is_dir() and skill_dir.name.endswith('-assistant'):
+                # Extract topic from {topic}-assistant
+                result['topic'] = skill_dir.name.replace('-assistant', '')
+                break
+
+    # Check for CLI tool in setup command
+    setup_commands = list((project_path / '.claude-plugin' / 'commands').glob('*-setup.md'))
+    if setup_commands:
+        try:
+            content = setup_commands[0].read_text()
+            # Try to extract CLI tool from content
+            if 'brew install' in content:
+                for line in content.split('\n'):
+                    if 'brew install' in line:
+                        parts = line.strip().split()
+                        if len(parts) >= 3:
+                            result['cli_tool'] = parts[-1]
+                            break
+        except Exception:
+            pass
+
+    # Default CLI tool to topic-as for custom libraries
+    if not result['cli_tool'] and result['topic']:
+        if result['type'] == 'custom-library':
+            result['cli_tool'] = f"{result['topic']}-as"
+        else:
+            result['cli_tool'] = result['topic']
+
+    return result
+
+
+def generate_skill_md(
+    topic: str,
+    skill_name: str,
+    description: str,
+    operations: list,
+    cli_tool: str,
+    project_name: str = None
+) -> str:
+    """Generate SKILL.md content with CLI command references."""
+
+    # Build operations table
+    operations_table = ""
+    for op in operations:
+        risk = "-"
+        if op in ('create', 'update'):
+            risk = "⚠️"
+        elif op in ('delete',):
+            risk = "⚠️⚠️"
+
+        if op == 'list':
+            operations_table += f"| List {skill_name}s | `{cli_tool} {skill_name} list` | {risk} |\n"
+        elif op == 'get':
+            operations_table += f"| Get {skill_name} | `{cli_tool} {skill_name} get <id>` | {risk} |\n"
+        elif op == 'create':
+            operations_table += f"| Create {skill_name} | `{cli_tool} {skill_name} create [options]` | {risk} |\n"
+        elif op == 'update':
+            operations_table += f"| Update {skill_name} | `{cli_tool} {skill_name} update <id> [options]` | {risk} |\n"
+        elif op == 'delete':
+            operations_table += f"| Delete {skill_name} | `{cli_tool} {skill_name} delete <id>` | {risk} |\n"
+        elif op == 'search':
+            operations_table += f"| Search {skill_name}s | `{cli_tool} {skill_name} search <query>` | {risk} |\n"
+        elif op == 'export':
+            operations_table += f"| Export {skill_name}s | `{cli_tool} {skill_name} export [options]` | {risk} |\n"
+        elif op == 'import':
+            operations_table += f"| Import {skill_name}s | `{cli_tool} {skill_name} import <file>` | ⚠️ |\n"
+        else:
+            operations_table += f"| {op.title()} | `{cli_tool} {skill_name} {op}` | {risk} |\n"
+
+    # Build trigger phrases
+    trigger_list = ', '.join([f'({i+1}) {op} {skill_name}s' for i, op in enumerate(operations[:5])])
+
+    # Build command sections
+    command_sections = ""
+
+    if 'list' in operations:
+        command_sections += f"""
+### List {skill_name.title()}s
+
+```bash
+{cli_tool} {skill_name} list [--filter <query>] [--output json|table]
+```
+
+**Examples:**
+```bash
+# List all {skill_name}s
+{cli_tool} {skill_name} list
+
+# Filter by status
+{cli_tool} {skill_name} list --filter "status=active"
+
+# JSON output for scripting
+{cli_tool} {skill_name} list --output json
+```
+"""
+
+    if 'get' in operations:
+        command_sections += f"""
+### Get {skill_name.title()} Details
+
+```bash
+{cli_tool} {skill_name} get <id> [--output json|table]
+```
+
+**Examples:**
+```bash
+# Get by ID
+{cli_tool} {skill_name} get ITEM-123
+
+# JSON output
+{cli_tool} {skill_name} get ITEM-123 --output json
+```
+"""
+
+    if 'create' in operations:
+        command_sections += f"""
+### Create {skill_name.title()}
+
+```bash
+{cli_tool} {skill_name} create --name <name> [--description <desc>]
+```
+
+**Examples:**
+```bash
+# Create with name
+{cli_tool} {skill_name} create --name "New {skill_name.title()}"
+
+# Create with full details
+{cli_tool} {skill_name} create --name "New {skill_name.title()}" --description "Description"
+```
+"""
+
+    if 'update' in operations:
+        command_sections += f"""
+### Update {skill_name.title()}
+
+```bash
+{cli_tool} {skill_name} update <id> [--name <name>] [--description <desc>]
+```
+
+**Examples:**
+```bash
+# Update name
+{cli_tool} {skill_name} update ITEM-123 --name "Updated Name"
+
+# Update multiple fields
+{cli_tool} {skill_name} update ITEM-123 --name "New Name" --status "active"
+```
+"""
+
+    if 'delete' in operations:
+        command_sections += f"""
+### Delete {skill_name.title()}
+
+```bash
+{cli_tool} {skill_name} delete <id> [--force]
+```
+
+**Examples:**
+```bash
+# Delete with confirmation
+{cli_tool} {skill_name} delete ITEM-123
+
+# Delete without confirmation
+{cli_tool} {skill_name} delete ITEM-123 --force
+```
+"""
+
+    if 'search' in operations:
+        command_sections += f"""
+### Search {skill_name.title()}s
+
+```bash
+{cli_tool} {skill_name} search <query> [--limit <n>] [--output json|table]
+```
+
+**Examples:**
+```bash
+# Search by keyword
+{cli_tool} {skill_name} search "keyword"
+
+# Search with limit
+{cli_tool} {skill_name} search "keyword" --limit 10
+```
+"""
 
     return f"""---
 name: "{topic}-{skill_name}"
-description: "{description}"
-when_to_use: |
-  - Working with {skill_name}
-  - {description}
+description: "{description}. ALWAYS use this skill when user wants to: {trigger_list}."
+version: "1.0.0"
+author: "{project_name or topic}"
+license: "MIT"
+allowed-tools: ["Bash", "Read", "Glob", "Grep"]
 ---
 
 # {skill_name.title()} Skill
 
 {description}
 
----
+## Quick Reference
 
-## What This Skill Does
+| Operation | Command | Risk |
+|-----------|---------|:----:|
+{operations_table}
+**Risk Legend**: - Safe | ⚠️ Caution | ⚠️⚠️ Warning | ⚠️⚠️⚠️ Danger
 
-| Operation | Script | Description |
-|-----------|--------|-------------|
-{scripts_table}
+## When to Use This Skill
 
----
+**ALWAYS use when:**
+- User wants to work with {skill_name}s
+- User mentions "{skill_name}", "{skill_name}s", or related terms
 
-## Quick Start
+**NEVER use when:**
+- User wants bulk operations on 10+ items (use {topic}-bulk instead)
+- User is doing general search/query (use {topic}-search instead)
+
+## Available Commands
+{command_sections}
+## Common Patterns
+
+### Pattern 1: View and Update
 
 ```bash
-# List all
-python list_{skill_name}.py
+# Step 1: List to find the item
+{cli_tool} {skill_name} list --filter "name=example"
 
-# Get by ID
-python get_{skill_name}.py ID
+# Step 2: Get details
+{cli_tool} {skill_name} get ITEM-123
 
-# With different profile
-python list_{skill_name}.py --profile development
+# Step 3: Update if needed
+{cli_tool} {skill_name} update ITEM-123 --status completed
 ```
 
----
+### Pattern 2: Create and Verify
 
-## Available Scripts
+```bash
+# Step 1: Create new item
+{cli_tool} {skill_name} create --name "New Item"
 
-All scripts support:
-- `--help` - Show usage and examples
-- `--profile` - Use specific configuration profile
-- `--output` - Output format (text, json)
+# Step 2: Verify creation
+{cli_tool} {skill_name} list --filter "name=New Item"
+```
 
----
+## Troubleshooting
 
-## Configuration
+| Issue | Cause | Solution |
+|-------|-------|----------|
+| Authentication failed | Invalid token | Run `{cli_tool} auth login` |
+| Resource not found | Invalid ID | Verify ID with `{cli_tool} {skill_name} list` |
+| Permission denied | Insufficient rights | Check your permissions |
 
-Uses shared configuration from `.claude/settings.json`.
+## Related Documentation
 
----
-
-## Related Skills
-
-| Skill | Relationship |
-|-------|--------------|
-| `{topic}-assistant` | Hub skill for routing |
+- [Best Practices](./docs/BEST_PRACTICES.md)
+- [Safeguards](../shared/docs/SAFEGUARDS.md)
 """
 
 
-def generate_script_template(topic: str, skill_name: str, script_name: str) -> str:
-    """Generate a script file template."""
-    resource = skill_name
+def generate_best_practices_md(topic: str, skill_name: str, cli_tool: str) -> str:
+    """Generate best practices documentation."""
+    return f"""# {skill_name.title()} Best Practices
 
-    return f'''#!/usr/bin/env python3
+## General Guidelines
+
+1. **Always verify before modifying** - List or get items before updating/deleting
+2. **Use filters wisely** - Narrow down results with filters to avoid mistakes
+3. **Prefer JSON output for scripting** - Use `--output json` when piping to other tools
+
+## Safety Checklist
+
+Before any destructive operation:
+
+- [ ] Verify the target ID/name is correct
+- [ ] Confirm you have the right permissions
+- [ ] Consider if this should be a bulk operation
+- [ ] Know the rollback procedure
+
+## Common Mistakes
+
+| Mistake | Prevention |
+|---------|------------|
+| Wrong ID | Always double-check with `{cli_tool} {skill_name} get <id>` |
+| Missing confirmation | Don't use `--force` unless certain |
+| Wrong filter | Test filters with list before bulk operations |
+
+## Performance Tips
+
+1. Use pagination for large result sets
+2. Cache frequently accessed data
+3. Use filters to reduce API calls
 """
-{script_name.replace('_', ' ').title()} {skill_name}.
-
-Examples:
-    python {script_name}_{skill_name}.py --help
-    python {script_name}_{skill_name}.py --output json
-"""
-
-import argparse
-import sys
-from pathlib import Path
-
-# Add shared lib to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'shared' / 'scripts' / 'lib'))
-
-# Uncomment when shared lib is implemented:
-# from config_manager import get_client
-# from error_handler import handle_errors
-# from validators import validate_required
-# from formatters import print_success, format_table, format_json
-
-
-def main():
-    parser = argparse.ArgumentParser(
-        description='{script_name.replace("_", " ").title()} {skill_name}',
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  python {script_name}_{skill_name}.py
-  python {script_name}_{skill_name}.py --output json
-  python {script_name}_{skill_name}.py --profile development
-"""
-    )
-
-    # Add arguments based on script type
-    {"parser.add_argument('id', nargs='?', help='Resource ID')" if script_name in ('get', 'update', 'delete') else "# No positional args for list/create/search"}
-
-    parser.add_argument('--profile', '-p', help='Configuration profile')
-    parser.add_argument('--output', '-o', choices=['text', 'json'], default='text',
-                        help='Output format')
-
-    args = parser.parse_args()
-
-    # TODO: Implement {script_name} logic
-    print(f"TODO: Implement {script_name}_{skill_name}")
-
-    # Example implementation pattern:
-    # client = get_client(profile=args.profile)
-    # result = client.{script_name}('{resource}')
-    #
-    # if args.output == 'json':
-    #     print(format_json(result))
-    # else:
-    #     print(format_table(result))
-
-
-if __name__ == '__main__':
-    main()
-'''
-
-
-def generate_test_template(topic: str, skill_name: str, script_name: str) -> str:
-    """Generate a test file template."""
-    return f'''"""
-Tests for {script_name}_{skill_name}.py
-"""
-
-import pytest
-from unittest.mock import patch, MagicMock
-
-
-class Test{script_name.title()}{skill_name.title()}:
-    """Tests for {script_name}_{skill_name} script."""
-
-    def test_{script_name}_returns_results(self):
-        """Test that {script_name} returns expected results."""
-        # Arrange
-        # mock_client = MagicMock()
-        # mock_client.{script_name}.return_value = {{'data': []}}
-
-        # Act
-        # with patch('script.get_client', return_value=mock_client):
-        #     result = {script_name}_function()
-
-        # Assert
-        # assert result is not None
-        pass  # TODO: Implement test
-
-    def test_{script_name}_handles_errors(self):
-        """Test that {script_name} handles API errors gracefully."""
-        # TODO: Implement error handling test
-        pass
-
-    def test_{script_name}_validates_input(self):
-        """Test that {script_name} validates required inputs."""
-        # TODO: Implement validation test
-        pass
-'''
-
-
-def generate_conftest(topic: str, skill_name: str) -> str:
-    """Generate conftest.py with shared fixtures."""
-    return f'''"""
-Pytest fixtures for {topic}-{skill_name} tests.
-"""
-
-import pytest
-from unittest.mock import MagicMock
-
-
-@pytest.fixture
-def mock_client():
-    """Create a mock API client."""
-    client = MagicMock()
-    return client
-
-
-@pytest.fixture
-def sample_{skill_name}():
-    """Sample {skill_name} data for testing."""
-    return {{
-        'id': '123',
-        'name': 'Test {skill_name.title()}',
-        'status': 'active'
-    }}
-
-
-@pytest.fixture
-def sample_{skill_name}_list(sample_{skill_name}):
-    """Sample list of {skill_name} for testing."""
-    return [sample_{skill_name}]
-'''
 
 
 def add_skill(
@@ -254,8 +368,7 @@ def add_skill(
     skill_name: str,
     description: str,
     resource: str = None,
-    scripts: list = None,
-    with_tests: bool = True,
+    operations: list = None,
     dry_run: bool = False
 ) -> dict:
     """
@@ -265,25 +378,38 @@ def add_skill(
     """
     project_path = Path(project_dir).expanduser().resolve()
 
-    # Detect project
-    project = detect_project(str(project_path))
-    if not project:
-        raise ValueError(f"No Assistant Skills project found at: {project_path}")
+    # Detect project structure
+    project_info = detect_project_type(project_path)
+    topic = project_info.get('topic')
+    cli_tool = project_info.get('cli_tool')
 
-    topic = project['topic_prefix']
     if not topic:
-        raise ValueError("Could not detect topic prefix. Is this a valid project?")
+        # Fallback: try to detect from old structure
+        project = detect_project(str(project_path))
+        if not project:
+            raise ValueError(f"No Assistant Skills project found at: {project_path}")
+        topic = project.get('topic_prefix')
+        if not topic:
+            raise ValueError("Could not detect topic prefix. Is this a valid project?")
+
+    if not cli_tool:
+        cli_tool = topic
 
     # Default resource to skill name
     if not resource:
         resource = skill_name
 
-    # Default scripts
-    if not scripts:
-        scripts = SCRIPT_PRESETS['crud']
+    # Default operations
+    if not operations:
+        operations = OPERATION_PRESETS['crud']
 
-    # Skill directory
-    skills_dir = project_path / '.claude' / 'skills'
+    # Skill directory - use new structure (skills/)
+    skills_dir = project_path / 'skills'
+
+    # Fallback to old structure if new doesn't exist
+    if not skills_dir.exists():
+        skills_dir = project_path / '.claude' / 'skills'
+
     skill_dir = skills_dir / f'{topic}-{skill_name}'
 
     if skill_dir.exists() and not dry_run:
@@ -291,68 +417,56 @@ def add_skill(
 
     result = {
         'skill_dir': str(skill_dir),
-        'files': []
+        'files': [],
+        'topic': topic,
+        'cli_tool': cli_tool
     }
 
     # Create directories
     dirs = [
         skill_dir,
-        skill_dir / 'scripts',
-        skill_dir / 'tests',
-        skill_dir / 'tests' / 'live_integration',
-        skill_dir / 'docs'
+        skill_dir / 'docs',
     ]
 
     for d in dirs:
         if not dry_run:
             d.mkdir(parents=True, exist_ok=True)
 
-    # Create SKILL.md
+    # Create SKILL.md (CLI-reference style, no scripts)
     skill_md_path = skill_dir / 'SKILL.md'
-    skill_md_content = generate_skill_md(topic, skill_name, description, scripts)
+    skill_md_content = generate_skill_md(
+        topic=topic,
+        skill_name=skill_name,
+        description=description,
+        operations=operations,
+        cli_tool=cli_tool,
+        project_name=project_info.get('name')
+    )
     result['files'].append('SKILL.md')
     if not dry_run:
         skill_md_path.write_text(skill_md_content)
 
-    # Create scripts
-    scripts_init = skill_dir / 'scripts' / '__init__.py'
-    result['files'].append('scripts/__init__.py')
+    # Create docs/BEST_PRACTICES.md
+    best_practices_path = skill_dir / 'docs' / 'BEST_PRACTICES.md'
+    best_practices_content = generate_best_practices_md(topic, skill_name, cli_tool)
+    result['files'].append('docs/BEST_PRACTICES.md')
     if not dry_run:
-        scripts_init.write_text(f'"""{skill_name.title()} scripts."""\n')
+        best_practices_path.write_text(best_practices_content)
 
-    for script in scripts:
-        script_path = skill_dir / 'scripts' / f'{script}_{skill_name}.py'
-        script_content = generate_script_template(topic, skill_name, script)
-        result['files'].append(f'scripts/{script}_{skill_name}.py')
-        if not dry_run:
-            script_path.write_text(script_content)
-            script_path.chmod(0o755)
-
-    # Create tests
-    if with_tests:
-        tests_init = skill_dir / 'tests' / '__init__.py'
-        result['files'].append('tests/__init__.py')
-        if not dry_run:
-            tests_init.write_text(f'"""{skill_name.title()} tests."""\n')
-
-        conftest_path = skill_dir / 'tests' / 'conftest.py'
-        conftest_content = generate_conftest(topic, skill_name)
-        result['files'].append('tests/conftest.py')
-        if not dry_run:
-            conftest_path.write_text(conftest_content)
-
-        for script in scripts:
-            test_path = skill_dir / 'tests' / f'test_{script}_{skill_name}.py'
-            test_content = generate_test_template(topic, skill_name, script)
-            result['files'].append(f'tests/test_{script}_{skill_name}.py')
-            if not dry_run:
-                test_path.write_text(test_content)
-
-        # Live integration placeholder
-        live_init = skill_dir / 'tests' / 'live_integration' / '__init__.py'
-        result['files'].append('tests/live_integration/__init__.py')
-        if not dry_run:
-            live_init.write_text('"""Live integration tests."""\n')
+    # Update plugin.json to include new skill
+    plugin_json_path = project_path / '.claude-plugin' / 'plugin.json'
+    if plugin_json_path.exists() and not dry_run:
+        try:
+            plugin = json.loads(plugin_json_path.read_text())
+            skill_path = f"../skills/{topic}-{skill_name}/SKILL.md"
+            if 'skills' not in plugin:
+                plugin['skills'] = []
+            if skill_path not in plugin['skills']:
+                plugin['skills'].append(skill_path)
+                plugin_json_path.write_text(json.dumps(plugin, indent=2))
+                result['files'].append('.claude-plugin/plugin.json (updated)')
+        except Exception as e:
+            print_warning(f"Could not update plugin.json: {e}")
 
     return result
 
@@ -363,23 +477,47 @@ def interactive_mode(project_dir: str = '.'):
     print("  Add Skill Wizard")
     print("=" * 60 + "\n")
 
-    # Detect project
-    project = detect_project(project_dir)
-    if not project:
-        print_error(f"No Assistant Skills project found in: {project_dir}")
-        alt_path = input("Enter project path (or press Enter to cancel): ").strip()
-        if not alt_path:
-            return None
-        project = detect_project(alt_path)
-        if not project:
-            print_error(f"No project found at: {alt_path}")
-            return None
-        project_dir = alt_path
+    project_path = Path(project_dir).expanduser().resolve()
 
-    topic = project['topic_prefix']
-    print_info(f"Detected project: {project['name']}")
+    # Detect project
+    project_info = detect_project_type(project_path)
+    topic = project_info.get('topic')
+    cli_tool = project_info.get('cli_tool')
+
+    if not topic:
+        # Fallback to old detection
+        project = detect_project(project_dir)
+        if not project:
+            print_error(f"No Assistant Skills project found in: {project_dir}")
+            alt_path = input("Enter project path (or press Enter to cancel): ").strip()
+            if not alt_path:
+                return None
+            project_path = Path(alt_path).expanduser().resolve()
+            project_info = detect_project_type(project_path)
+            topic = project_info.get('topic')
+            cli_tool = project_info.get('cli_tool')
+            if not topic:
+                print_error(f"No project found at: {alt_path}")
+                return None
+            project_dir = alt_path
+        else:
+            topic = project['topic_prefix']
+            cli_tool = topic
+
+    print_info(f"Detected project type: {project_info.get('type', 'unknown')}")
     print_info(f"Topic prefix: {topic}")
-    print_info(f"Existing skills: {', '.join(project['skills']) if project['skills'] else '(none)'}")
+    print_info(f"CLI tool: {cli_tool}")
+
+    # List existing skills
+    skills_dir = project_path / 'skills'
+    if not skills_dir.exists():
+        skills_dir = project_path / '.claude' / 'skills'
+
+    if skills_dir.exists():
+        existing = [d.name for d in skills_dir.iterdir()
+                   if d.is_dir() and d.name != 'shared' and not d.name.startswith('.')]
+        if existing:
+            print_info(f"Existing skills: {', '.join(existing)}")
     print()
 
     # Skill details
@@ -395,19 +533,19 @@ def interactive_mode(project_dir: str = '.'):
     if not resource:
         resource = name
 
-    # Scripts
-    print("\nStep 2: Scripts\n")
-    print("Presets: crud (list/get/create/update/delete), list-get, all")
-    print("Or enter comma-separated script names")
+    # Operations
+    print("\nStep 2: Operations\n")
+    print("Presets: crud (list/get/create/update/delete), readonly, all")
+    print("Or enter comma-separated operation names")
 
-    scripts_input = input("Scripts [crud]: ").strip().lower()
-    if not scripts_input:
-        scripts_input = 'crud'
+    operations_input = input("Operations [crud]: ").strip().lower()
+    if not operations_input:
+        operations_input = 'crud'
 
-    if scripts_input in SCRIPT_PRESETS:
-        scripts = SCRIPT_PRESETS[scripts_input]
+    if operations_input in OPERATION_PRESETS:
+        operations = OPERATION_PRESETS[operations_input]
     else:
-        scripts = validate_list(scripts_input, "scripts", min_items=1)
+        operations = validate_list(operations_input, "operations", min_items=1)
 
     # Confirmation
     print("\n" + "-" * 60)
@@ -416,7 +554,8 @@ def interactive_mode(project_dir: str = '.'):
     print(f"  Skill:       {topic}-{name}")
     print(f"  Description: {description}")
     print(f"  Resource:    {resource}")
-    print(f"  Scripts:     {', '.join(scripts)}")
+    print(f"  Operations:  {', '.join(operations)}")
+    print(f"  CLI Tool:    {cli_tool}")
     print("-" * 60)
 
     confirm = input("\nProceed? [Y/n]: ").strip().lower()
@@ -425,11 +564,11 @@ def interactive_mode(project_dir: str = '.'):
         return None
 
     return {
-        'project_dir': project_dir,
+        'project_dir': str(project_path),
         'skill_name': name,
         'description': description,
         'resource': resource,
-        'scripts': scripts
+        'operations': operations
     }
 
 
@@ -446,22 +585,20 @@ Examples:
   python add_skill.py --name "search" --description "Search operations"
 
   # CRUD preset
-  python add_skill.py --name "users" --description "User management" --scripts crud
+  python add_skill.py --name "users" --description "User management" --operations crud
 
-  # Custom scripts
-  python add_skill.py --name "reports" --scripts "generate,schedule,export"
+  # Custom operations
+  python add_skill.py --name "reports" --operations "list,get,generate,export"
 '''
     )
 
     parser.add_argument('--name', '-n', help='Skill name (without topic prefix)')
     parser.add_argument('--description', '-d', help='One-line description')
     parser.add_argument('--resource', '-r', help='Primary API resource name')
-    parser.add_argument('--scripts', '-s',
-                        help='Script names: crud, list-get, all, or comma-separated')
+    parser.add_argument('--operations', '-o',
+                        help='Operations: crud, readonly, all, or comma-separated list')
     parser.add_argument('--project-dir', '-p', default='.',
                         help='Project directory (default: current)')
-    parser.add_argument('--no-tests', action='store_true',
-                        help='Skip generating test files')
     parser.add_argument('--dry-run', action='store_true',
                         help='Preview without creating files')
 
@@ -474,20 +611,20 @@ Examples:
             if not config:
                 sys.exit(0)
         else:
-            # Parse scripts
-            scripts = None
-            if args.scripts:
-                if args.scripts in SCRIPT_PRESETS:
-                    scripts = SCRIPT_PRESETS[args.scripts]
+            # Parse operations
+            operations = None
+            if args.operations:
+                if args.operations in OPERATION_PRESETS:
+                    operations = OPERATION_PRESETS[args.operations]
                 else:
-                    scripts = [s.strip() for s in args.scripts.split(',')]
+                    operations = [s.strip() for s in args.operations.split(',')]
 
             config = {
                 'project_dir': args.project_dir,
                 'skill_name': validate_name(args.name, "skill name"),
                 'description': validate_required(args.description, "description"),
                 'resource': args.resource,
-                'scripts': scripts
+                'operations': operations
             }
 
         # Add skill
@@ -499,8 +636,7 @@ Examples:
             skill_name=config['skill_name'],
             description=config['description'],
             resource=config.get('resource'),
-            scripts=config.get('scripts'),
-            with_tests=not args.no_tests,
+            operations=config.get('operations'),
             dry_run=args.dry_run
         )
 
@@ -512,15 +648,14 @@ Examples:
             for f in result['files']:
                 print(f"  {f}")
 
-        # TDD guidance
+        # Next steps
         print("\n" + "=" * 60)
-        print("TDD Workflow:")
+        print("Next Steps:")
         print("=" * 60)
-        print("1. Write failing tests in tests/")
-        print("2. Commit: test(skill): add failing tests for X")
-        print("3. Implement scripts to pass tests")
-        print("4. Commit: feat(skill): implement X (N/N tests passing)")
-        print("5. Update router skill with new routing")
+        print("1. Review and customize SKILL.md")
+        print("2. Add skill-specific documentation to docs/")
+        print("3. Update the hub router skill routing table")
+        print("4. Test the CLI commands documented in SKILL.md")
 
     except ValidationError as e:
         print_error(str(e))
