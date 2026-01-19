@@ -1,0 +1,15 @@
+
+╔═══════════════════════════════════════════════════════════════╗
+║                                                               ║
+║   Welcome to {{PRODUCT}} Assistant Skills Demo!               ║
+║                                                               ║
+║   This is a live demo environment with Claude Code           ║
+║   and the {{PRODUCT}} Assistant Skills plugin installed.      ║
+║                                                               ║
+║   Try commands like:                                          ║
+║     claude "Show me available skills"                         ║
+║                                                               ║
+║   Session timeout: {{SESSION_TIMEOUT}} minutes                ║
+║                                                               ║
+╚═══════════════════════════════════════════════════════════════╝
+

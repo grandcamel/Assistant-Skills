@@ -1,0 +1,24 @@
+# Prometheus Configuration
+# 7-day retention, 1GB storage limit
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+storage:
+  tsdb:
+    retention.time: 7d
+    retention.size: 1GB
+
+scrape_configs:
+  # Scrape Redis exporter
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    metrics_path: /metrics
+    scrape_interval: 15s
+
+  # Scrape Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['127.0.0.1:9090']

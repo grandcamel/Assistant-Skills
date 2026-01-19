@@ -1,0 +1,10 @@
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "C4", "UP"]
+ignore = ["E501"]  # Line too long - handled by line-length
+
+[tool.ruff.lint.isort]
+known-first-party = ["scripts"]

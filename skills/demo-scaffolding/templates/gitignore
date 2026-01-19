@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Environment and secrets
+secrets/.env
+secrets/*.env
+session-env/
+.env
+.env.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Logs
+*.log
+logs/
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+/tmp/
+
+# Docker
+docker-compose.override.yml
+
+# SSL certificates (stored in /etc/letsencrypt on host)
+*.pem
+*.key
+*.crt
+
+# Checkpoints
+/tmp/claude-checkpoints/
+/tmp/checkpoints/

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{PRODUCT}} Assistant Skills - Live Demo</title>
+    <meta name="description" content="Try {{PRODUCT}} Assistant Skills live. Natural language {{PRODUCT}} automation with Claude Code.">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <img src="assets/logo.svg" alt="{{PRODUCT}} Assistant Skills" width="40" height="40">
+                <span>{{PRODUCT}} Assistant Skills</span>
+            </div>
+            <nav>
+{{#IF HAS_PLUGIN}}
+                <a href="https://github.com/grandcamel/{{PLUGIN}}" target="_blank">GitHub</a>
+                <a href="https://github.com/grandcamel/{{PLUGIN}}#quick-start" target="_blank">Docs</a>
+{{/IF}}
+{{#IF NO_PLUGIN}}
+                <a href="#" target="_blank">GitHub</a>
+                <a href="#" target="_blank">Docs</a>
+{{/IF}}
+            </nav>
+        </div>
+    </header>
+
+    <!-- Invite Error (shown when invalid invite) -->
+    <section class="invite-error" id="invite-error" hidden>
+        <div class="error-icon">&#x26A0;</div>
+        <h2 id="error-title">Invalid Invite</h2>
+        <p id="error-message">This invite link is not valid.</p>
+        <a href="/" class="try-again-btn">Back to Home</a>
+    </section>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <h1>Talk to {{PRODUCT}} like you talk to a teammate</h1>
+        <p class="tagline">Natural language automation with Claude Code</p>
+
+        <!-- Queue Status -->
+        <div class="queue-status" id="queue-status">
+            <div class="status-indicator available" id="status-indicator">
+                <span class="dot"></span>
+                <span id="status-text">Checking availability...</span>
+            </div>
+        </div>
+
+        <!-- Start Demo Button -->
+        <button class="start-demo-btn" id="start-demo-btn" disabled>
+            <span class="btn-text">Start Demo</span>
+            <span class="btn-loading" hidden>Connecting...</span>
+        </button>
+
+        <!-- Queue Position (shown when waiting) -->
+        <div class="queue-position" id="queue-position" hidden>
+            <p>You're #<span id="position-number">1</span> in line</p>
+            <p class="wait-time">Estimated wait: <span id="wait-time">45 minutes</span></p>
+            <button class="leave-queue-btn" id="leave-queue-btn">Leave Queue</button>
+        </div>
+    </section>
+
+    <!-- Scenarios Section -->
+    <section class="scenarios">
+        <h2>Guided Scenarios</h2>
+        <p class="section-intro">Step-by-step walkthroughs to explore {{PRODUCT}} automation</p>
+
+        <div class="scenario-cards">
+{{SCENARIO_CARDS}}
+        </div>
+    </section>
+
+    <!-- Sample Commands Section -->
+    <section class="commands">
+        <h2>What You Can Say</h2>
+
+        <div class="command-examples">
+{{SAMPLE_COMMANDS}}
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+        <h2>What's Included</h2>
+
+        <div class="feature-grid">
+            <div class="feature">
+                <span class="feature-icon">🤖</span>
+                <h3>{{PRODUCT}} Skills</h3>
+                <p>Full automation suite for common operations</p>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">☁️</span>
+                <h3>Live Sandbox</h3>
+                <p>Pre-configured instance with sample content</p>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">⏱️</span>
+                <h3>{{SESSION_TIMEOUT}} Minute Session</h3>
+                <p>Plenty of time to explore all capabilities</p>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">🔄</span>
+                <h3>Auto-Reset</h3>
+                <p>Sandbox resets after each session - experiment freely!</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>
+{{#IF HAS_PLUGIN}}
+            <a href="https://github.com/grandcamel/{{PLUGIN}}" target="_blank">{{PRODUCT}} Assistant Skills</a>
+            &middot;
+            <a href="https://github.com/grandcamel/{{PLUGIN}}/blob/main/LICENSE" target="_blank">MIT License</a>
+            &middot;
+{{/IF}}
+            Built with <a href="https://claude.ai/code" target="_blank">Claude Code</a>
+        </p>
+    </footer>
+
+    <!-- Terminal Overlay (shown when session active) -->
+    <div class="terminal-overlay" id="terminal-overlay" hidden>
+        <div class="terminal-header">
+            <span class="terminal-title">{{PRODUCT}} Assistant Skills Demo</span>
+            <nav class="terminal-nav">
+                <div class="dropdown">
+                    <button class="dropdown-btn">Scenarios ▾</button>
+                    <div class="dropdown-content">
+{{SCENARIO_LINKS}}
+                    </div>
+                </div>
+                <a href="/grafana/" target="_blank" class="nav-link">📊 Dashboards</a>
+            </nav>
+            <span class="terminal-timer" id="terminal-timer">{{SESSION_TIMEOUT}}:00</span>
+            <button class="terminal-close" id="terminal-close">End Session</button>
+        </div>
+        <iframe id="terminal-iframe" src=""></iframe>
+    </div>
+
+    <script src="queue-client.js"></script>
+</body>
+</html>

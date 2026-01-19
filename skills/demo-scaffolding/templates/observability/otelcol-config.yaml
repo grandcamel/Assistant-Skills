@@ -1,0 +1,54 @@
+# OpenTelemetry Collector Configuration
+# Receives telemetry from queue-manager and Python scripts
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+
+  # Add resource attributes
+  resource:
+    attributes:
+      - key: deployment.environment
+        value: "demo"
+        action: upsert
+
+exporters:
+  # Export to Prometheus (metrics)
+  otlphttp/prometheus:
+    endpoint: http://127.0.0.1:9090/api/v1/otlp
+
+  # Export to Tempo (traces)
+  otlphttp/tempo:
+    endpoint: http://127.0.0.1:4318
+
+  # Export to Loki (logs)
+  otlphttp/loki:
+    endpoint: http://127.0.0.1:3100/otlp
+
+  # Debug logging (disabled in prod)
+  debug:
+    verbosity: basic
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch, resource]
+      exporters: [otlphttp/tempo]
+    metrics:
+      receivers: [otlp]
+      processors: [batch, resource]
+      exporters: [otlphttp/prometheus]
+    logs:
+      receivers: [otlp]
+      processors: [batch, resource]
+      exporters: [otlphttp/loki]

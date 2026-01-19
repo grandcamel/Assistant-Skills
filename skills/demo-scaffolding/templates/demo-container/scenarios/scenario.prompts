@@ -1,0 +1,9 @@
+---
+prompt: |
+  Show me the available {{PRODUCT}} skills
+expect:
+  tools:
+    must_call: [Skill]
+  text:
+    must_contain: [skill]
+---

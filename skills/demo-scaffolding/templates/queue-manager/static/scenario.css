@@ -1,0 +1,121 @@
+/* Scenario Page Styles */
+
+:root {
+    --deep-navy: #1a1a2e;
+    --dark-blue: #16213e;
+    --primary-blue: #0052CC;
+    --light-gray: #e2e8f0;
+    --muted-gray: #94a3b8;
+    --white: #ffffff;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: linear-gradient(135deg, var(--deep-navy) 0%, var(--dark-blue) 100%);
+    color: var(--white);
+    min-height: 100vh;
+    line-height: 1.6;
+}
+
+header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.back-link {
+    color: var(--muted-gray);
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.back-link:hover {
+    color: var(--white);
+}
+
+header h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+main {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.content {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 2rem;
+}
+
+.content h1, .content h2, .content h3 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.content h1:first-child {
+    margin-top: 0;
+}
+
+.content p {
+    margin-bottom: 1rem;
+    color: var(--light-gray);
+}
+
+.content ul, .content ol {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+}
+
+.content li {
+    margin-bottom: 0.5rem;
+    color: var(--light-gray);
+}
+
+.content code {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 0.2em 0.4em;
+    border-radius: 4px;
+    font-family: 'Monaco', 'Menlo', monospace;
+    font-size: 0.9em;
+    color: #00C7E6;
+}
+
+.content pre {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 1rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin-bottom: 1rem;
+}
+
+.content pre code {
+    background: none;
+    padding: 0;
+}
+
+.content a {
+    color: var(--primary-blue);
+    text-decoration: none;
+}
+
+.content a:hover {
+    text-decoration: underline;
+}
+
+footer {
+    text-align: center;
+    padding: 2rem;
+    color: var(--muted-gray);
+    font-size: 0.85rem;
+}

@@ -1,0 +1,58 @@
+# Development overrides for docker-compose.yml
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+version: '3.8'
+
+services:
+  nginx:
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/demo.dev.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/locations.include:/etc/nginx/conf.d/locations.include:ro
+      - ./landing-page:/var/www/html:ro
+      - nginx-logs:/var/log/nginx
+      # No SSL certificates for local dev
+
+  queue-manager:
+    build:
+      context: ./queue-manager
+      dockerfile: Dockerfile
+    volumes:
+      - ./queue-manager:/app:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - NODE_ENV=development
+      - CLAUDE_CODE_OAUTH_TOKEN=${CLAUDE_CODE_OAUTH_TOKEN}
+      - OTEL_LOG_LEVEL=debug
+      - ENABLE_AUTOPLAY=true
+      - AUTOPLAY_DEBUG=true
+      - AUTOPLAY_SHOW_TOOLS=true
+      - OTEL_ENDPOINT=http://host.docker.internal:3100
+    command: ["node", "--watch", "--require", "./instrumentation.js", "server.js"]
+
+  redis:
+    ports:
+      - "6379:6379"
+
+  lgtm:
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_LOG_LEVEL=debug
+      - GF_SERVER_ROOT_URL=http://localhost:3001/
+      - GF_SERVER_SERVE_FROM_SUB_PATH=false
+    ports:
+      - "3001:3000"   # Grafana UI for direct access in dev
+      - "3100:3100"   # Loki push API for autoplay debug logs
+      - "3200:3200"   # Tempo query API for trace inspection
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+
+  redis-exporter:
+    ports:
+      - "9121:9121"   # Redis metrics for debugging
+
+volumes:
+  nginx-logs:

@@ -1,0 +1,133 @@
+# Shared location blocks for {{PRODUCT}} Demo
+# Included by both demo.conf (production) and demo.dev.conf (development)
+
+# Internal auth endpoint - receives token via X-Invite-Token header
+location = /auth/validate {
+    internal;
+    proxy_pass http://queue_manager/api/invite/validate;
+    proxy_pass_request_body off;
+    proxy_set_header Content-Length "";
+    proxy_set_header X-Invite-Token $invite_token;
+}
+
+# Internal auth endpoint for Grafana - validates session cookie
+location = /auth/grafana-validate {
+    internal;
+    proxy_pass http://queue_manager/api/session/validate;
+    proxy_pass_request_body off;
+    proxy_set_header Content-Length "";
+    proxy_set_header X-Original-URI $request_uri;
+    proxy_set_header Cookie $http_cookie;
+}
+
+# Grafana - requires active session (validated via cookie)
+location /grafana/ {
+    auth_request /auth/grafana-validate;
+    auth_request_set $grafana_user $upstream_http_x_grafana_user;
+    error_page 401 = @grafana_unauthorized;
+
+    proxy_pass http://grafana/grafana/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-WEBAUTH-USER $grafana_user;
+
+    # WebSocket support for live dashboards
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection $connection_upgrade;
+}
+
+# Grafana auth failure - redirect to landing
+location @grafana_unauthorized {
+    return 302 /?error=session_required;
+}
+
+# Static assets (no auth required)
+location ~ ^/(assets/|styles\.css|favicon\.ico|queue-client\.js) {
+    root /var/www/html;
+}
+
+# Health check (^~ prevents regex override)
+location ^~ /health {
+    access_log off;
+    return 200 "OK\n";
+    add_header Content-Type text/plain;
+}
+
+# WebSocket endpoint - must be before /api/
+location ^~ /api/ws {
+    proxy_pass http://queue_manager/api/ws;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_read_timeout 86400;
+    proxy_send_timeout 86400;
+}
+
+# Queue Manager API (^~ prevents regex override)
+location ^~ /api/ {
+    proxy_pass http://queue_manager/api/;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+
+# Scenarios - rendered markdown pages (no auth required)
+location /scenarios/ {
+    proxy_pass http://queue_manager/api/scenarios/;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+
+# Terminal WebSocket (^~ prevents regex override)
+location ^~ /terminal {
+    proxy_pass http://terminal/;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_read_timeout 86400;
+    proxy_send_timeout 86400;
+}
+
+# Invite token path (4-64 char URL-safe token)
+location ~ "^/([A-Za-z0-9_-]{4,64})$" {
+    set $invite_token $1;
+
+    # Validate invite token
+    auth_request /auth/validate;
+    auth_request_set $auth_status $upstream_status;
+
+    # On auth failure, show unauthorized page
+    error_page 401 403 = @unauthorized;
+
+    # Serve the app
+    root /var/www/html;
+    try_files /index.html =404;
+}
+
+# Unauthorized handler
+location @unauthorized {
+    root /var/www/html;
+    try_files /unauthorized.html =404;
+}
+
+# Root and other paths - show unauthorized page
+location / {
+    root /var/www/html;
+    try_files /unauthorized.html =404;
+}

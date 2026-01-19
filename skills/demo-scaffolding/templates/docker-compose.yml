@@ -1,0 +1,179 @@
+version: '3.8'
+
+# Shared logging configurations
+x-logging-standard: &logging-standard
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-logging-small: &logging-small
+  driver: json-file
+  options:
+    max-size: "5m"
+    max-file: "2"
+
+# Shared health check configurations
+x-healthcheck-http: &healthcheck-http
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 10s
+
+x-healthcheck-fast: &healthcheck-fast
+  interval: 10s
+  timeout: 5s
+  retries: 3
+  start_period: 5s
+
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: {{DEMO_NAME}}-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/demo.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/locations.include:/etc/nginx/conf.d/locations.include:ro
+      - ./landing-page:/var/www/html:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - nginx-logs:/var/log/nginx
+    # Override default symlinks to /dev/stdout so logs go to actual files for promtail
+    command: >
+      sh -c "rm -f /var/log/nginx/access.log /var/log/nginx/error.log &&
+             touch /var/log/nginx/access.log /var/log/nginx/error.log &&
+             nginx -g 'daemon off;'"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:80/"]
+      <<: *healthcheck-http
+    depends_on:
+      queue-manager:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - demo-network
+    logging: *logging-standard
+
+  queue-manager:
+    build: ./queue-manager
+    container_name: {{DEMO_NAME}}-queue
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - SESSION_TIMEOUT_MINUTES=${SESSION_TIMEOUT_MINUTES:-{{SESSION_TIMEOUT}}}
+      - MAX_QUEUE_SIZE=${MAX_QUEUE_SIZE:-{{MAX_QUEUE_SIZE}}}
+      - {{API_TOKEN_VAR}}=${{API_TOKEN_VAR}}
+{{#IF HAS_PLUGIN}}
+      - {{API_URL_VAR}}=${{API_URL_VAR}}
+{{/IF}}
+      - CLAUDE_CODE_OAUTH_TOKEN=${CLAUDE_CODE_OAUTH_TOKEN}
+      - OTEL_SERVICE_NAME={{DEMO_NAME}}-queue-manager
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://lgtm:4318
+      - OTEL_TRACES_EXPORTER=otlp
+      - OTEL_METRICS_EXPORTER=otlp
+      - SESSION_SECRET=${SESSION_SECRET:-change-me-in-production}
+      - SESSION_ENV_HOST_PATH=${PWD}/session-env
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./secrets:/secrets:ro
+      - ./session-env:/run/session-env
+      - ./demo-container:/opt/demo-container:ro
+      - ./scripts:/opt/scripts:ro
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:3000/api/health"]
+      <<: *healthcheck-http
+    depends_on:
+      redis:
+        condition: service_healthy
+      lgtm:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - demo-network
+    logging: *logging-standard
+
+  redis:
+    image: redis:alpine
+    container_name: {{DEMO_NAME}}-redis
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      <<: *healthcheck-fast
+    restart: unless-stopped
+    networks:
+      - demo-network
+    logging: *logging-small
+
+  lgtm:
+    image: grafana/otel-lgtm:latest
+    container_name: {{DEMO_NAME}}-lgtm
+    environment:
+      - GF_SERVER_ROOT_URL=http://localhost:8080/grafana/
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+      - GF_AUTH_PROXY_ENABLED=true
+      - GF_AUTH_PROXY_HEADER_NAME=X-WEBAUTH-USER
+      - GF_AUTH_PROXY_HEADER_PROPERTY=username
+      - GF_AUTH_PROXY_AUTO_SIGN_UP=true
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_PLUGINS_ENABLE_ALPHA=false
+      - GF_PLUGINS_DISABLE_PLUGINS=grafana-exploretraces-app,grafana-metricsdrilldown-app,grafana-pyroscope-app
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/var/lib/grafana/dashboards/demo-home.json
+    volumes:
+      - ./observability/grafana-dashboards.yaml:/otel-lgtm/grafana/conf/provisioning/dashboards/{{DEMO_NAME}}.yaml:ro
+      - ./observability/dashboards:/var/lib/grafana/dashboards:ro
+      - lgtm-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /tmp/ready"]
+      <<: *healthcheck-http
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - demo-network
+    logging: *logging-standard
+
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: {{DEMO_NAME}}-redis-exporter
+    environment:
+      - REDIS_ADDR=redis://redis:6379
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9121/metrics"]
+      <<: *healthcheck-fast
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - demo-network
+    logging: *logging-small
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: {{DEMO_NAME}}-promtail
+    volumes:
+      - ./observability/promtail-config.yaml:/etc/promtail/config.yml:ro
+      - nginx-logs:/var/log/nginx:ro
+    command: -config.file=/etc/promtail/config.yml
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9080/ready"]
+      <<: *healthcheck-fast
+    depends_on:
+      lgtm:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - demo-network
+    logging: *logging-small
+
+networks:
+  demo-network:
+    external: true
+    name: {{NETWORK_NAME}}
+
+volumes:
+  redis-data:
+  lgtm-data:
+  nginx-logs:

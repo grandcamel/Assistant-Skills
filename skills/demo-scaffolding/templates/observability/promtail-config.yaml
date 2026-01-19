@@ -1,0 +1,46 @@
+# Promtail Configuration
+# Ships nginx access logs to Loki
+
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://lgtm:3100/loki/api/v1/push
+
+scrape_configs:
+  # Scrape nginx access logs (JSON format)
+  - job_name: nginx
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: nginx
+          __path__: /var/log/nginx/access.log
+    pipeline_stages:
+      - json:
+          expressions:
+            time: time
+            remote_addr: remote_addr
+            request: request
+            status: status
+            body_bytes_sent: body_bytes_sent
+            request_time: request_time
+            http_user_agent: http_user_agent
+      - labels:
+          status:
+      - timestamp:
+          source: time
+          format: RFC3339
+
+  # Scrape nginx error logs
+  - job_name: nginx-error
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: nginx-error
+          __path__: /var/log/nginx/error.log
