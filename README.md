@@ -432,19 +432,19 @@ See [tests/e2e/README.md](tests/e2e/README.md) for details.
 Assistant-Skills/
 ├── .claude-plugin/
 │   ├── plugin.json           # Plugin manifest
-│   ├── marketplace.json      # Marketplace registry
-│   ├── commands/             # Slash commands
-│   │   ├── assistant-skills-setup.md
-│   │   └── assistant-builder-setup.md
-│   └── agents/               # Skill reviewer agents
-├── skills/
+│   └── marketplace.json      # Marketplace registry
+├── commands/                 # Slash commands (at project root)
+│   ├── assistant-skills-setup.md
+│   └── assistant-builder-setup.md
+├── agents/                   # Skill reviewer agents (at project root)
+├── skills/                   # Skills (autodiscovered at project root)
 │   ├── setup-wizard/         # Environment setup
 │   ├── assistant-builder/    # Project scaffolding
 │   ├── skills-optimizer/     # Token optimization
 │   ├── landing-page/         # README branding
 │   ├── library-publisher/    # PyPI publishing
 │   └── e2e-testing/          # E2E test infrastructure
-├── hooks/                    # Plugin hooks
+├── hooks/                    # Plugin hooks (at project root)
 │   └── hooks.json            # SessionStart health checks
 ├── docker/                   # Docker infrastructure
 │   ├── runtime/              # Claude Code runtime image
@@ -462,6 +462,9 @@ Assistant-Skills/
 ├── requirements.txt          # Python dependencies
 └── README.md
 ```
+
+Note: All plugin components (commands/, agents/, skills/, hooks/) are at project root.
+Paths in `.claude-plugin/plugin.json` are relative to project root, NOT to `.claude-plugin/`.
 
 ---
 

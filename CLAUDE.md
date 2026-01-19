@@ -108,12 +108,12 @@ Authentication: Local runs prefer OAuth (`~/.claude.json`), Docker runs require 
 
 ### Directory Structure
 
-Skills and tests are in a single location:
-- `skills/` - All skills with their scripts, docs, and tests
-- `.claude-plugin/` - Plugin manifest, commands, and agents
+All plugin components are at project root (paths in plugin.json are relative to project root):
+- `skills/` - All skills with their scripts, docs, and tests (autodiscovered)
+- `commands/` - Slash commands
+- `agents/` - Skill reviewer agents
 - `hooks/` - Plugin hooks (SessionStart health checks)
-
-The plugin.json references `../skills/` to load skills from the repo root.
+- `.claude-plugin/` - Plugin manifest only (plugin.json, marketplace.json)
 
 ### Test Infrastructure
 
@@ -148,10 +148,10 @@ Package source: https://github.com/grandcamel/assistant-skills-lib
 
 ### Plugin Manifest Files
 
-- `.claude-plugin/plugin.json` - Plugin definition (references `../skills/` and `../hooks/`)
+- `.claude-plugin/plugin.json` - Plugin definition (paths relative to project root)
 - `.claude-plugin/marketplace.json` - Marketplace registry with installable plugins
-- `.claude-plugin/commands/` - Slash commands (assistant-skills-setup, assistant-builder-setup)
-- `.claude-plugin/agents/` - Skill reviewer agents
+
+Note: Commands, agents, skills, and hooks are at project root, NOT inside `.claude-plugin/`.
 
 ## Skill Development Patterns
 
