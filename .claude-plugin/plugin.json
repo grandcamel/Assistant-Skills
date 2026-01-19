@@ -1,29 +1,10 @@
 {
   "name": "assistant-skills",
-  "version": "1.3.1",
   "description": "Templates and tools for building Claude Code Assistant Skills projects. Includes project scaffolding, skill creation wizards, optimization tools, library publishing, E2E testing, and Docker runtime support.",
+  "version": "1.3.1",
   "author": {
-    "name": "Jason Krueger",
-    "url": "https://github.com/grandcamel"
+    "name": "Jason Krueger"
   },
   "repository": "https://github.com/grandcamel/Assistant-Skills",
-  "license": "MIT",
-  "keywords": [
-    "assistant-skills",
-    "scaffolding",
-    "templates",
-    "skills-optimizer",
-    "progressive-disclosure",
-    "token-efficiency",
-    "e2e-testing",
-    "library-publisher"
-  ],
-  "skills": "../skills/",
-  "agents": "./agents/",
-  "commands": "./commands/",
-  "hooks": "../hooks/hooks.json",
-  "assistant_skills": {
-    "requirements": "requirements.txt",
-    "env_vars": []
-  }
+  "license": "MIT"
 }

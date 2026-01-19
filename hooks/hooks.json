@@ -1,9 +1,15 @@
 {
-  "hooks": [
-    {
-      "event": "SessionStart",
-      "type": "prompt",
-      "prompt": "Perform Assistant Skills health check silently. Run these checks:\n\n1. Check if ~/.assistant-skills/config.yaml exists. If not, suggest: 'Run /assistant-skills-setup to configure Assistant Skills.'\n\n2. Check if ~/.assistant-skills-venv/bin/python exists. If not but config exists, suggest: 'Shared venv missing. Run /assistant-skills-setup to recreate.'\n\n3. Check if PATH contains ~/.assistant-skills-venv/bin (indicating claude-as was used). If not, show a tip: 'Tip: Use claude-as instead of claude to run with Assistant Skills dependencies.'\n\n4. Try to import assistant_skills_lib: python -c 'import assistant_skills_lib'. If ImportError, suggest running /assistant-skills-setup.\n\n5. Read the requirements.txt from ${CLAUDE_PLUGIN_ROOT} and compute its md5 hash. Compare with combined_requirements_hash in config.yaml. If different, auto-update by running: ~/.assistant-skills-venv/bin/pip install -r ${CLAUDE_PLUGIN_ROOT}/requirements.txt --upgrade --quiet, then update the hash in config.yaml. Inform user: 'Dependencies updated automatically.'\n\n6. Read assistant_skills.env_vars from ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json. For each required env var, check if it's set. If any are missing, warn: 'Missing required env vars: [list]. Set them before using affected skills.'\n\nOnly show messages if there are issues. Be concise. Do not block the user from working."
-    }
-  ]
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Perform Assistant Skills health check silently. Run these checks:\n\n1. Check if ~/.assistant-skills/config.yaml exists. If not, suggest: 'Run /assistant-skills-setup to configure Assistant Skills.'\n\n2. Check if ~/.assistant-skills-venv/bin/python exists. If not but config exists, suggest: 'Shared venv missing. Run /assistant-skills-setup to recreate.'\n\n3. Check if PATH contains ~/.assistant-skills-venv/bin (indicating claude-as was used). If not, show a tip: 'Tip: Use claude-as instead of claude to run with Assistant Skills dependencies.'\n\n4. Try to import assistant_skills_lib: python -c 'import assistant_skills_lib'. If ImportError, suggest running /assistant-skills-setup.\n\n5. Read the requirements.txt from ${CLAUDE_PLUGIN_ROOT} and compute its md5 hash. Compare with combined_requirements_hash in config.yaml. If different, auto-update by running: ~/.assistant-skills-venv/bin/pip install -r ${CLAUDE_PLUGIN_ROOT}/requirements.txt --upgrade --quiet, then update the hash in config.yaml. Inform user: 'Dependencies updated automatically.'\n\nOnly show messages if there are issues. Be concise. Do not block the user from working."
+          }
+        ]
+      }
+    ]
+  }
 }
