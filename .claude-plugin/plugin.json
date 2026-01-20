@@ -6,6 +6,5 @@
     "name": "Jason Krueger"
   },
   "repository": "https://github.com/grandcamel/Assistant-Skills",
-  "license": "MIT",
-  "hooks": "./hooks/hooks.json"
+  "license": "MIT"
 }
