@@ -11,7 +11,7 @@
 <sub>Faster skill<br>development</sub>
 </td>
 <td align="center">
-<h2>6</h2>
+<h2>7</h2>
 <sub>Production-ready<br>skills included</sub>
 </td>
 <td align="center">
@@ -72,7 +72,7 @@ From Claude Code:
 /plugin grandcamel/Assistant-Skills
 ```
 
-This adds the marketplace and installs the `assistant-skills` plugin with all 6 skills.
+This adds the marketplace and installs the `assistant-skills` plugin with all 7 skills.
 
 **Alternative: Clone locally**
 ```bash
@@ -132,6 +132,7 @@ Claude scaffolds your project with:
 | **landing-page** | Generate branded READMEs | `"Create a landing page for this project"` |
 | **library-publisher** | Publish shared libs to PyPI | `"Publish my shared library as a PyPI package"` |
 | **e2e-testing** | Set up E2E test infrastructure | `"Add E2E tests to my plugin"` |
+| **safe-mode** | Risk-based CLI permission enforcement | `claude-safe -d -l caution` |
 
 ### setup-wizard
 
@@ -223,6 +224,28 @@ python skills/e2e-testing/scripts/generate_test_cases.py /path/to/project
 # Update documentation with E2E info
 python skills/e2e-testing/scripts/update_docs.py /path/to/project
 ```
+
+### safe-mode
+
+Risk-based permission enforcement wrapper for Claude CLI. Restricts CLI operations based on configurable risk thresholds.
+
+```bash
+# Auto-discover plugins, safe level (read-only only)
+./scripts/claude-safe -d
+
+# Caution level (allows creates/updates)
+./scripts/claude-safe -d -l caution
+
+# Preview permissions without running
+./scripts/claude-safe -d -n -v
+
+# Pass arguments to claude
+./scripts/claude-safe -d -l warning -- --model sonnet
+```
+
+Risk levels: `safe` (read-only) < `caution` (creates) < `warning` (deletes) < `danger` (irreversible).
+
+**Dependencies**: bash 4.0+, yq, jq (`brew install yq jq`)
 
 ---
 
@@ -357,6 +380,7 @@ flowchart TD
     AS --> LP["landing-page<br/>README Branding"]
     AS --> LIB["library-publisher<br/>PyPI Publishing"]
     AS --> E2E["e2e-testing<br/>E2E Test Infrastructure"]
+    AS --> SM["safe-mode<br/>Permission Enforcement"]
 
     SW --> VE["Shared Venv<br/>~/.assistant-skills-venv"]
     AB --> T["Templates"]
@@ -366,6 +390,7 @@ flowchart TD
     LP --> TM["Template Engine"]
     LIB --> PY["PyPI Package<br/>Generation"]
     E2E --> DOC["Docker + pytest"]
+    SM --> SG["SAFEGUARDS.md<br/>Permission Blocks"]
 ```
 
 ### Progressive Disclosure Model
@@ -443,7 +468,8 @@ Assistant-Skills/
 │   ├── skills-optimizer/     # Token optimization
 │   ├── landing-page/         # README branding
 │   ├── library-publisher/    # PyPI publishing
-│   └── e2e-testing/          # E2E test infrastructure
+│   ├── e2e-testing/          # E2E test infrastructure
+│   └── safe-mode/            # Permission enforcement
 ├── hooks/                    # Plugin hooks (at project root)
 │   └── hooks.json            # SessionStart health checks
 ├── docker/                   # Docker infrastructure

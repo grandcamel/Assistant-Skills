@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Claude Code plugin marketplace providing templates, wizards, and tools for building Assistant Skills projects. It contains 6 production-ready skills and serves as both an installable plugin and a reference implementation.
+This is a Claude Code plugin marketplace providing templates, wizards, and tools for building Assistant Skills projects. It contains 7 production-ready skills and serves as both an installable plugin and a reference implementation.
 
 ## Commands
 
@@ -103,6 +103,23 @@ docker build -t assistant-skills -f docker/runtime/Dockerfile .
 ```
 
 Authentication: Local runs prefer OAuth (`~/.claude.json`), Docker runs require `ANTHROPIC_API_KEY`. See `skills/e2e-testing/SKILL.md` for configuration options.
+
+### Run Claude with Safe Mode
+```bash
+# Auto-discover plugins, safe level (read-only)
+./scripts/claude-safe -d
+
+# Caution level (allows creates/updates)
+./scripts/claude-safe -d -l caution
+
+# Preview permissions without running
+./scripts/claude-safe -d -n -v
+
+# Pass arguments to claude
+./scripts/claude-safe -d -l warning -- --model sonnet
+```
+
+Risk levels: `safe` (read-only) < `caution` (creates) < `warning` (deletes) < `danger` (irreversible). See `skills/safe-mode/SKILL.md` for details.
 
 ## Architecture
 
