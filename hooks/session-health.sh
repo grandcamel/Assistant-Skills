@@ -11,11 +11,15 @@ VPY="$VENV/bin/python"
 out=""
 note() { out="${out}- $1\n"; }
 
-# 1. Config present
+# 1. No config = this machine never opted into the shared-venv workflow.
+# Stay completely quiet; /assistant-skills-setup and the plugin docs cover
+# discovery, and a per-session nag on non-opted-in machines is just noise.
 if [ ! -f "$CFG" ]; then
-  note "Run /assistant-skills-setup to configure Assistant Skills."
-elif [ ! -x "$VPY" ]; then
-  # 2. Shared venv present (only meaningful once config exists)
+  exit 0
+fi
+
+# 2. Shared venv present
+if [ ! -x "$VPY" ]; then
   note "Shared venv missing. Run /assistant-skills-setup to recreate."
 fi
 
